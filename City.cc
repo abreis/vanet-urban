@@ -158,6 +158,53 @@ namespace ns3
 		City->TranslateVehicles();
 	}
 
+	void City::TranslateVehicles()
+	{
+		/*
+		 * Rules:
+		 * - Update horizontal first, vertical second
+		 * - Update a single lane at a time, starting from the front vehicle to the back
+		 */
+
+		// start by locating the first horizontal road (3 consecutive RRR)
+		vector< vector< Cell > >::const_iterator rowiterator;
+		for(rowiterator=m_cityGrid.begin(); rowiterator!=m_cityGrid.end(); rowiterator++)
+		{
+			vector< Cell >::const_iterator coliterator=rowiterator->begin();
+			if(coliterator->type==ROAD && (coliterator+1)->type==ROAD && (coliterator+2)->type==ROAD)
+			{
+				// we're at a horizontal road
+				// first horizontal lane from top runs eastbound, so we're at the start
+
+				// find first vehicle in lane
+				for(coliterator=rowiterator->begin(); coliterator!=rowiterator->end(); coliterator++)
+				{
+					if(coliterator->vehicle!=0) // there's a vehicle here
+					{
+						// TODO movement rules for eastbound vehicle
+					}
+				}	// finished running through eastbound lane
+
+				/* * * * * * */
+
+				// now jump to the next lane, and start from the end (westbound traffic)
+				rowiterator++;
+				for(coliterator=rowiterator->end(); coliterator!=rowiterator->begin(); coliterator--)
+				{
+					if(coliterator->vehicle!=0) // there's a vehicle here
+					{
+						// TODO movement rules for westbound vehicle
+					}
+				}	// finished running through westbound lane
+			}
+
+		}	// end of row iterator
+
+		// now repeat for columns
+
+		Simulator::Schedule(Seconds(m_dt), &City::Step, Ptr<City>(this));
+	}
+
 	double City::GetDeltaT()
 	{
 		return m_dt;
@@ -169,11 +216,6 @@ namespace ns3
 			value=0.1;
 
 		m_dt=value;
-	}
-
-	void City::TranslateVehicles()
-	{
-		Simulator::Schedule(Seconds(m_dt), &City::Step, Ptr<City>(this));
 	}
 
 	Callback<void, Ptr<Vehicle>, VanetHeader> City::GetReceiveDataCallback()

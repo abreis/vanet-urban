@@ -55,6 +55,8 @@ static void Stop(Ptr<City> City) { City->Stop(); }
 static bool InitVehicles(Ptr<City> City, int& VID)
 {
 	// initialize vehicles in this routine
+
+
 	return true;
 }
 
@@ -78,7 +80,7 @@ int main (int argc, char *argv[])
 	// Default values
 	float simTime=5000.0;				// simulation time
 	int runNumber=1;					// run number
-
+	double deltaT=1;					// simulation step, max resolution is 1 step per deltaT
 
 	// Process command-line args
 	CommandLine cmd;
@@ -88,6 +90,7 @@ int main (int argc, char *argv[])
 
 	// Create and setup a City
 //	Ptr<City> City=CreateObject<City>();
+	g_City->SetDeltaT(deltaT);
 
 	// Bind the City/Vehicle events to the event handlers
 	g_City->SetControlVehicleCallback(MakeCallback(&ControlVehicle));
