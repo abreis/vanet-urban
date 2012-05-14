@@ -36,13 +36,121 @@ namespace ns3
 
 	}
 
+	void City::Start()
+	{
+		InitCity();
+		Simulator::Schedule(Seconds(0.0), &Step, Ptr<City>(this));
+	}
+
+	void City::Stop()
+	{
+
+	}
+
+	City::City()
+	{
+		m_dt=0.1;
+
+		/*
+		 * Init m_cityGrid and fill the pattern of street/building/parking cells
+		 */
+		m_cityGrid.resize(2000/5);	//  2km city, 5m cells
+
+		short rowmult=15, colmult=15;
+
+		vector< vector< Cell > >::iterator rowiterator;
+		for(rowiterator=m_cityGrid.begin(); rowiterator!=m_cityGrid.end(); rowiterator++)
+		{
+			rowiterator->resize(2000/5);	// resize each row to 400 columns
+			vector< Cell >::iterator coliterator;
+			for(coliterator=rowiterator->begin(); coliterator!=rowiterator->end(); coliterator++)
+			{
+				switch(rowmult)
+				{
+					case 1:
+					case 25:
+						switch(colmult)
+						{
+							case 1:
+							case 25:
+								coliterator->type=INTERSECTION; break;
+							default:
+								coliterator->type=ROAD; break;
+						}
+						break;
+					case 2:
+					case 24:
+						switch(colmult)
+						{
+							case 1:
+							case 25:
+								coliterator->type=ROAD; break;
+							case 2:
+							case 24:
+								coliterator->type=BUILDING; break;
+							default:
+								coliterator->type=PARKING; break;
+						}
+						break;
+					default:
+						switch(colmult)
+						{
+							case 1:
+							case 25:
+								coliterator->type=ROAD; break;
+							case 2:
+							case 24:
+								coliterator->type=PARKING; break;
+							default:
+								coliterator->type=BUILDING; break;
+						}
+						break;
+				}
+				if(colmult==25) colmult=1; else colmult++;
+			}	// end column iterator
+			if(rowmult==25) rowmult=1; else rowmult++;
+		}	// end row iterator
+	}
 
 	City::~City()
 	{
-		// init m_cityGrid
-		m_cityGrid.resize(2000/5);	//  2km city, 5m cells
-		// get an iterator and add lines of cells
 
+	}
+
+	void City::printCityStruct(void)
+	{
+		vector< vector< Cell > >::const_iterator rowiterator;
+		for(rowiterator=m_cityGrid.begin(); rowiterator!=m_cityGrid.end(); rowiterator++)
+		{
+			vector< Cell >::const_iterator coliterator;
+			for(coliterator=rowiterator->begin(); coliterator!=rowiterator->end(); coliterator++)
+			{
+				switch(coliterator->type)
+				{
+					case ROAD: cout << 'R'; break;
+					case BUILDING: cout << 'B'; break;
+					case INTERSECTION: cout << 'I'; break;
+					case PARKING: cout << 'P'; break;
+				}
+			}
+			cout << '\n';
+		}
+	}
+
+	void City::printCityPointVehicles(void)
+	{
+		vector< vector< Cell > >::const_iterator rowiterator;
+		for(rowiterator=m_cityGrid.begin(); rowiterator!=m_cityGrid.end(); rowiterator++)
+		{
+			vector< Cell >::const_iterator coliterator;
+			for(coliterator=rowiterator->begin(); coliterator!=rowiterator->end(); coliterator++)
+			{
+				if(coliterator->type==BUILDING) cout << ' ';
+					else{ if(coliterator->vehicle==0) cout << '0';
+						else cout << '1'; }
+			}
+			cout << '\n';
+		}
 	}
 
 	void City::Step(Ptr<City> City)
@@ -50,18 +158,6 @@ namespace ns3
 		City->TranslateVehicles();
 	}
 
-	void City::Start()
-	{
-		m_stopped=false;
-		InitCity();
-		Simulator::Schedule(Seconds(0.0), &Step, Ptr<City>(this));
-	}
-
-	void City::Stop()
-	{
-		m_stopped=true;
-	}
- 
 	double City::GetDeltaT()
 	{
 		return m_dt;
@@ -73,6 +169,11 @@ namespace ns3
 			value=0.1;
 
 		m_dt=value;
+	}
+
+	void City::TranslateVehicles()
+	{
+		Simulator::Schedule(Seconds(m_dt), &City::Step, Ptr<City>(this));
 	}
 
 	Callback<void, Ptr<Vehicle>, VanetHeader> City::GetReceiveDataCallback()
@@ -100,7 +201,7 @@ namespace ns3
 		return m_initVehicle;
 	}
 
-	void City::SetInitVehicleCallback(Callback<bool, Ptr<City>, int&> initVehicle)
+	void City::SetInitVehiclesCallback(Callback<bool, Ptr<City>, int&> initVehicle)
 	{
 		m_initVehicle = initVehicle;
 	}

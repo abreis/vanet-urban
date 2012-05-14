@@ -36,41 +36,37 @@
 using namespace ns3;
 using namespace std;
 
-static bool InitVehicle(Ptr<City> City, int& VID);
+static bool InitVehicles(Ptr<City> City, int& VID);
 static bool ControlVehicle(Ptr<City> City, Ptr<Vehicle> vehicle, double dt);
 static void ReceiveData(Ptr<Vehicle> vehicle, VanetHeader packet);
+
 // this declaration allows for global access to the City object
 static Ptr<City> g_City=CreateObject<City>();
 
+// aliases to enable scheduling
+static void Start(Ptr<City> City) { City->Start(); }
+static void Stop(Ptr<City> City) { City->Stop(); }
 
 
-/* * * * * * */
+/* * * * * * *
+ * * * * * * *
+ * * * * * * */
 
-static void Start(Ptr<City> City)
+static bool InitVehicles(Ptr<City> City, int& VID)
 {
-  City->Start();
-}
-
-static void Stop(Ptr<City> City)
-{
-  City->Stop();
-}
-
-static bool InitVehicle(Ptr<City> City, int& VID)
-{
-
+	// initialize vehicles in this routine
 	return true;
 }
 
 static bool ControlVehicle(Ptr<City> City, Ptr<Vehicle> vehicle, double dt)
 {
-
+	// called for every vehicle, on each time step
 	return true;
 }
 
 static void ReceiveData(Ptr<Vehicle> vehicle, VanetHeader packet)
 {
-
+	// called on packet reception
 }
 
 int main (int argc, char *argv[])
@@ -83,6 +79,7 @@ int main (int argc, char *argv[])
 	float simTime=5000.0;				// simulation time
 	int runNumber=1;					// run number
 
+
 	// Process command-line args
 	CommandLine cmd;
 	cmd.AddValue ("time", "simulation time", simTime);
@@ -94,7 +91,7 @@ int main (int argc, char *argv[])
 
 	// Bind the City/Vehicle events to the event handlers
 	g_City->SetControlVehicleCallback(MakeCallback(&ControlVehicle));
-	g_City->SetInitVehicleCallback(MakeCallback(&InitVehicle));
+	g_City->SetInitVehiclesCallback(MakeCallback(&InitVehicles));
 	g_City->SetReceiveDataCallback(MakeCallback(&ReceiveData));
 
 	// Setup seed and run-number (to affect random variable outcome of different runs)
