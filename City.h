@@ -27,7 +27,6 @@
 #include "ns3/random-variable.h"
 #include "ns3/vector.h"
 #include "Vehicle.h"
-#include "Model.h"
 #include "LaneChange.h"
 #include <vector>
 
