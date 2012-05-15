@@ -65,15 +65,18 @@ int main (int argc, char *argv[])
 	float simTime=5000.0;				// simulation time
 	int runNumber=1;					// run number
 	double deltaT=1;					// simulation step, max resolution is 1 step per deltaT
+	int gridSize=2000/5;
 
 	// Process command-line args
 	CommandLine cmd;
 	cmd.AddValue ("time", "simulation time", simTime);
 	cmd.AddValue ("rn", "run number", runNumber);
+	cmd.AddValue ("gridsize", "sqrt(cells)", gridSize);
 	cmd.Parse(argc, argv);
 
 	// Setup a City
 	g_City->SetDeltaT(deltaT);
+//	g_City->SetGridSize(gridSize);
 
 	// Bind the City/Vehicle events to the event handlers
 	g_City->SetInitVehiclesCallback(MakeCallback(&InitVehicles));

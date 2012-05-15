@@ -37,6 +37,7 @@ namespace ns3
 		bool is_alive;				// vehicle is active
 		bool is_rsu;					// vehicle is an RSU
 		bool is_silent;				// silent: no rebroadcast
+		bool is_parked;
 		double m_velocity;            // vehicle's velocity.
 		int m_vehicleId;              // vehicle's id
 		list<VanetHeader> p_buffer;	// packet storage
@@ -55,6 +56,10 @@ namespace ns3
 		void SetVelocity(double value);
 		bool IsAlive();
 		void SetAlive(bool status);
+		bool IsParked();
+		void SetParked(bool parked);
+		bool IsRSU();
+		void SetRSU(bool rsu);
 
 		list<VanetHeader> GetPacketList();
 		void AddPacket(VanetHeader header);

@@ -24,6 +24,7 @@
 #include "ns3/callback.h"
 #include "ns3/ptr.h"
 #include "ns3/object.h"
+#include "ns3/random-variable.h"
 #include <vector>
 #include "Vehicle.h"
 #include "VanetHeader.h"
@@ -44,8 +45,14 @@ namespace ns3
 				CellType type;
 			} Cell;
 
-			double m_dt;                          // the mobility step interval. (duraion between each step)
+			int m_gridSize;						// side (in cells) of cell grid
+			double m_dt;						// step interval
 			double m_range;						// vehicle radio range
+
+			UniformVariable randomNum;			// generates uniform numbers between 0.0 and 1.0
+			double m_probPark;					// probability of parking
+			double m_probTurnLeft;				// probability of turning left
+			double m_probTurnRight;				// probability of turning right
 
 			std::vector< std::vector< Cell > > m_cityGrid;
 

@@ -65,6 +65,18 @@ namespace ns3
 	bool Vehicle::IsAlive()
 		{ return is_alive; }
 
+	void Vehicle::SetParked(bool parked)
+		{ is_parked = parked; }
+
+	bool Vehicle::IsParked()
+		{ return is_parked; }
+
+	void Vehicle::SetRSU(bool rsu)
+		{ is_rsu = rsu; }
+
+	bool Vehicle::IsRSU()
+		{ return is_rsu; }
+
 	list<VanetHeader> Vehicle::GetPacketList()
 		{ return p_buffer; }
 
