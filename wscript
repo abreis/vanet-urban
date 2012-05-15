@@ -6,8 +6,8 @@ def build(bld):
 	'main.cc',
 	'City.cc',
 	'Vehicle.cc',
-	'Model.cc',
-	'LaneChange.cc',
+#	'Model.cc',
+#	'LaneChange.cc',
 	'VanetHeader.cc'
 	]
 
@@ -16,8 +16,8 @@ def build(bld):
     headers.source = [
 	'City.h',
 	'Vehicle.h',
-	'Model.h',
-	'LaneChange.h',
+#	'Model.h',
+#	'LaneChange.h',
 	'VanetHeader.h'
 	]
 

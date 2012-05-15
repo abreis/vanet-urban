@@ -29,9 +29,6 @@
 #include "ns3/random-variable.h"
 #include "math.h"
 #include "City.h"
-#include "VanetHeader.h"
-
-//NS_LOG_COMPONENT_DEFINE ("HADI");
 
 using namespace ns3;
 using namespace std;

@@ -26,9 +26,9 @@
 #include "ns3/object.h"
 #include "ns3/random-variable.h"
 #include "ns3/vector.h"
-#include "Vehicle.h"
-#include "LaneChange.h"
 #include <vector>
+#include "Vehicle.h"
+#include "VanetHeader.h"
 
 namespace ns3
 {
