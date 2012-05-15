@@ -32,9 +32,7 @@ namespace ns3
 	}
 
 	void City::InitCity()
-	{
-
-	}
+		{ }
 
 	void City::Start()
 	{
@@ -43,9 +41,7 @@ namespace ns3
 	}
 
 	void City::Stop()
-	{
-
-	}
+		{ }
 
 	City::City()
 	{
@@ -206,45 +202,28 @@ namespace ns3
 	}
 
 	double City::GetDeltaT()
-	{
-		return m_dt;
-	}
+		{ return m_dt; }
 
 	void City::SetDeltaT(double value)
-	{
-		if(value<=0)
-			value=0.1;
+		{ m_dt=value; }
 
-		m_dt=value;
-	}
+	/* Callbacks */
 
 	Callback<void, Ptr<Vehicle>, VanetHeader> City::GetReceiveDataCallback()
-	{
-		return m_receiveData;
-	}
+		{ return m_receiveData; }
 
 	void City::SetReceiveDataCallback(Callback<void, Ptr<Vehicle>, VanetHeader> receiveData)
-	{
-		m_receiveData = receiveData;
-	}
+		{ m_receiveData = receiveData; }
 
 	Callback<bool, Ptr<City>, Ptr<Vehicle>, double> City::GetControlVehicleCallback()
-	{
-		return m_controlVehicle;
-	}
+		{ return m_controlVehicle; }
 
 	void City::SetControlVehicleCallback(Callback<bool, Ptr<City>, Ptr<Vehicle>, double> controlVehicle)
-	{
-		m_controlVehicle = controlVehicle;
-	}
+		{ m_controlVehicle = controlVehicle; }
 
 	Callback<bool, Ptr<City>, int&> City::GetInitVehicleCallback()
-	{
-		return m_initVehicle;
-	}
+		{ return m_initVehicle; }
 
 	void City::SetInitVehiclesCallback(Callback<bool, Ptr<City>, int&> initVehicle)
-	{
-		m_initVehicle = initVehicle;
-	}
+		{ m_initVehicle = initVehicle; }
 }

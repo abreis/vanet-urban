@@ -24,15 +24,12 @@
 #include "ns3/callback.h"
 #include "ns3/ptr.h"
 #include "ns3/object.h"
-#include "ns3/random-variable.h"
-#include "ns3/vector.h"
 #include <vector>
 #include "Vehicle.h"
 #include "VanetHeader.h"
 
 namespace ns3
 {
-
 	// Setup a grid-like system for cars to travel in
 	class City: public ns3::Object
 	{
@@ -59,7 +56,6 @@ namespace ns3
 			Callback<bool, Ptr<City>, int&> m_initVehicle;
 			VehicleReceiveCallback m_receiveData;
 
-
 		public:
 			static TypeId GetTypeId (void);		// Override TypeId
 			City();
@@ -85,6 +81,8 @@ namespace ns3
 			* This function is called each interval dt to simulated the mobility through TranslateVehicles().
 			*/
 			static void Step(Ptr<City> City);
+
+		protected:
 
 	};
 };

@@ -1,8 +1,21 @@
+/* -*-  Mode: C++; c-file-style: "gnu"; indent-tabs-mode:nil; -*- */
 /*
- * VanetHeader.cc
+ * Copyright (c) 2012 Andre Braga Reis
  *
- *  Created on: Sep 26, 2011
- *      Author: andrer
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * Author: Andre Braga Reis <abreis@cmu.edu>
  */
 
 #include "VanetHeader.h"
@@ -20,9 +33,8 @@ VanetHeader::~VanetHeader()
 TypeId VanetHeader::GetTypeId (void)
 {
 	static TypeId tid = TypeId ("ns3::VanetHeader")
-	.SetParent<Header> ()
-	.AddConstructor<VanetHeader> ()
-	;
+		.SetParent<Header> ()
+		.AddConstructor<VanetHeader> ();
 	return tid;
 }
 
@@ -40,8 +52,6 @@ VanetHeader::Print (std::ostream &os) const
 	os << "src=" << m_src << std::endl;
 	os << "id=" << m_id << std::endl;
 	os << "timestamp=" << m_timestamp << std::endl;
-//	os << "posRX=" << m_posRX<< std::endl;
-//	os << "posTX=" << m_posTX << std::endl;
 }
 
 uint32_t
@@ -59,8 +69,6 @@ VanetHeader::Serialize (Buffer::Iterator start) const
 	start.WriteHtonU16 (m_src);
 	start.WriteHtonU16 (m_id);
 	start.WriteHtonU64 (m_timestamp);
-//	start.WriteHtonU64 (m_posRX);
-//	start.WriteHtonU64 (m_posTX);
 }
 
 uint32_t
@@ -72,8 +80,6 @@ VanetHeader::Deserialize (Buffer::Iterator start)
 	m_src = start.ReadNtohU16 ();
 	m_id = start.ReadNtohU16 ();
 	m_timestamp = start.ReadNtohU64 ();
-//	m_posRX = start.ReadNtohU64 ();
-//	m_posTX = start.ReadNtohU64 ();
 
 	// we return the number of bytes effectively read.
 	return 12;
@@ -95,18 +101,6 @@ void VanetHeader::SetTimestamp(double time)
 	m_timestamp = (uint64_t) (time*1000000);
 }
 
-//void VanetHeader::SetPosRX(double pos)
-//{
-//	// store a double as a longlong, 6 digits precision
-//	m_posRX = (uint64_t) (pos*1000000);
-//}
-//
-//void VanetHeader::SetPosTX(double pos)
-//{
-//	// store a double as a longlong, 6 digits precision
-//	m_posTX = (uint64_t) (pos*1000000);
-//}
-
 int VanetHeader::GetSource(void) const
 {
 	return (int)m_src;
@@ -121,13 +115,3 @@ double VanetHeader::GetTimestamp(void) const
 {
 	return ((double) m_timestamp)/1000000.0;
 }
-
-//double VanetHeader::GetPosRX(void)
-//{
-//	return ((double) m_posRX)/1000000.0;
-//}
-//
-//double VanetHeader::GetPosTX(void)
-//{
-//	return ((double) m_posTX)/1000000.0;
-//}

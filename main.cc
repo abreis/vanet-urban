@@ -19,15 +19,8 @@
  */
 
 
-#include <fstream>
 #include <iostream>
-#include <iomanip>
 #include "ns3/core-module.h"
-#include "ns3/network-module.h"
-#include "ns3/mobility-module.h"
-#include "ns3/wifi-module.h"
-#include "ns3/random-variable.h"
-#include "math.h"
 #include "City.h"
 
 using namespace ns3;
@@ -52,8 +45,6 @@ static void Stop(Ptr<City> City) { City->Stop(); }
 static bool InitVehicles(Ptr<City> City, int& VID)
 {
 	// initialize vehicles in this routine
-
-
 	return true;
 }
 
@@ -70,10 +61,6 @@ static void ReceiveData(Ptr<Vehicle> vehicle, VanetHeader packet)
 
 int main (int argc, char *argv[])
 { 
-	ns3::PacketMetadata::Enable();
-	Config::SetDefault ("ns3::WifiRemoteStationManager::FragmentationThreshold", StringValue ("2200"));
-	Config::SetDefault ("ns3::WifiRemoteStationManager::RtsCtsThreshold", StringValue ("2200"));
-
 	// Default values
 	float simTime=5000.0;				// simulation time
 	int runNumber=1;					// run number
@@ -85,13 +72,12 @@ int main (int argc, char *argv[])
 	cmd.AddValue ("rn", "run number", runNumber);
 	cmd.Parse(argc, argv);
 
-	// Create and setup a City
-//	Ptr<City> City=CreateObject<City>();
+	// Setup a City
 	g_City->SetDeltaT(deltaT);
 
 	// Bind the City/Vehicle events to the event handlers
-	g_City->SetControlVehicleCallback(MakeCallback(&ControlVehicle));
 	g_City->SetInitVehiclesCallback(MakeCallback(&InitVehicles));
+	g_City->SetControlVehicleCallback(MakeCallback(&ControlVehicle));
 	g_City->SetReceiveDataCallback(MakeCallback(&ReceiveData));
 
 	// Setup seed and run-number (to affect random variable outcome of different runs)
