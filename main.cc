@@ -22,11 +22,12 @@
 #include <iostream>
 #include "ns3/core-module.h"
 #include "City.h"
+#include "VanetHeader.h"
 
 using namespace ns3;
 using namespace std;
 
-static bool InitVehicles(Ptr<City> City, int& VID);
+static bool InitVehicles(Ptr<City> City);
 static bool ControlVehicle(Ptr<City> City, Ptr<Vehicle> vehicle, double dt);
 static void ReceiveData(Ptr<Vehicle> vehicle, VanetHeader packet);
 
@@ -42,9 +43,18 @@ static void Stop(Ptr<City> City) { City->Stop(); }
  * * * * * * *
  * * * * * * */
 
-static bool InitVehicles(Ptr<City> City, int& VID)
+static bool InitVehicles(Ptr<City> City)
 {
+	// print city map
+	g_City->printCityStruct();
+
 	// initialize vehicles in this routine
+	Ptr<Vehicle> testDummy01 = g_City->CreateVehicle();
+//	VanetHeader vHeader;
+//	vHeader.SetID(1337);
+//	testDummy01->AddPacket(vHeader);
+	Simulator::Schedule(Seconds(0.5), &ns3::City::AddVehicle, g_City, testDummy01, RIGHTTOP);
+
 	return true;
 }
 
@@ -62,7 +72,7 @@ static void ReceiveData(Ptr<Vehicle> vehicle, VanetHeader packet)
 int main (int argc, char *argv[])
 { 
 	// Default values
-	float simTime=5000.0;				// simulation time
+	float simTime=1000.0;				// simulation time
 	int runNumber=1;					// run number
 	double deltaT=1;					// simulation step, max resolution is 1 step per deltaT
 	int gridSize=2000/5;

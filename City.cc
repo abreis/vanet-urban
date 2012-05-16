@@ -18,10 +18,7 @@
  * Author: Andre Braga Reis <abreis@cmu.edu>
  */
 
-#include <iostream>
 #include "City.h"
-#include "ns3/simulator.h"
-#include <math.h>
 
 namespace ns3
 {
@@ -92,6 +89,12 @@ namespace ns3
 			}	// end column iterator
 			if(rowmult==25) rowmult=1; else rowmult++;
 		}	// end row iterator
+
+		if(!m_initVehicles.IsNull())
+		{
+			m_initVehicles(Ptr<City>(this));
+		}
+
 	}
 
 	void City::Start()
@@ -120,9 +123,11 @@ namespace ns3
 
 	void City::printCityStruct(void)
 	{
+		int rowNum=0;
 		vector< vector< Cell > >::const_iterator rowiterator;
 		for(rowiterator=m_cityGrid.begin(); rowiterator!=m_cityGrid.end(); rowiterator++)
 		{
+			cout << setw(3) << ++rowNum << ' ';
 			vector< Cell >::const_iterator coliterator;
 			for(coliterator=rowiterator->begin(); coliterator!=rowiterator->end(); coliterator++)
 			{
@@ -140,15 +145,19 @@ namespace ns3
 
 	void City::printCityPointVehicles(void)
 	{
-		vector< vector< Cell > >::const_iterator rowiterator;
-		for(rowiterator=m_cityGrid.begin(); rowiterator!=m_cityGrid.end(); rowiterator++)
+		int rowNum=0;
+//		vector< vector< Cell > >::const_iterator rowiterator;
+//		for(rowiterator=m_cityGrid.begin(); rowiterator!=m_cityGrid.end(); rowiterator++)
+		// TODO this blows up
+		for(int iRow = 1; iRow<=m_gridSize; iRow++)
 		{
-			vector< Cell >::const_iterator coliterator;
-			for(coliterator=rowiterator->begin(); coliterator!=rowiterator->end(); coliterator++)
+			cout << setw(3) << ++rowNum << ' ';
+//			vector< Cell >::const_iterator coliterator;
+//			for(coliterator=rowiterator->begin(); coliterator!=rowiterator->end(); coliterator++)
+			for(int iCol = 1; iCol<=m_gridSize; iCol++)
 			{
-				if(coliterator->type==BUILDING) cout << ' ';
-					else{ if(coliterator->vehicle==0) cout << '0';
-						else cout << '1'; }
+				if(m_cityGrid[iRow][iCol].type==BUILDING) cout << ' ';
+					else { if(m_cityGrid[iRow][iCol].vehicle==0) cout << '0'; else cout << '1'; }
 			}
 			cout << '\n';
 		}
@@ -156,7 +165,49 @@ namespace ns3
 
 	void City::Step(Ptr<City> City)
 	{
+		ns3::Time nowtime = ns3::Simulator::Now();
+		cout << nowtime.ns3::Time::GetSeconds() << " STEP\n";
+
 		City->TranslateVehicles();
+		// DEBUG
+		City->printCityPointVehicles();
+	}
+
+	Ptr<Vehicle> City::CreateVehicle (void)
+	{
+		Ptr<Vehicle> veh = CreateObject<Vehicle>();
+		veh->SetReceiveCallback(m_receiveData);
+		return veh;
+	}
+
+
+	void City::AddVehicle(Ptr<Vehicle> veh, CellOrientation ort)
+	{
+		ns3::Time nowtime = ns3::Simulator::Now();
+		cout << nowtime.ns3::Time::GetSeconds() << " NEW \n";
+
+		int iRow, iCol;
+		switch(ort)
+		{
+		case LEFTTOP:	// westbound
+			for(iRow = 1; !(m_cityGrid[iRow][1].type==ROAD && m_cityGrid[iRow][2].type==ROAD && m_cityGrid[iRow][3].type==ROAD); iRow++)
+			for(iCol = 1; m_cityGrid[iRow+1][iCol].vehicle!=0; iCol++);	// find empty cell on westbound lane
+			m_cityGrid[iRow+1][iCol].vehicle=veh;
+			m_Vehicles.push_back(veh);
+			break;
+
+		case RIGHTTOP:	// eastbound
+			for(iRow = 1; !(m_cityGrid[iRow][1].type==ROAD && m_cityGrid[iRow][2].type==ROAD && m_cityGrid[iRow][3].type==ROAD); iRow++)
+			for(iCol = m_gridSize; m_cityGrid[iRow][iCol].vehicle!=0; iCol--);	// find empty cell on eastbound lane
+			m_cityGrid[iRow][iCol].vehicle=veh;
+			m_Vehicles.push_back(veh);
+			cout << "New vehicle on " << iRow << ' ' << iCol << '\n';
+//			cout << "Position is " << ( (m_cityGrid[iRow][iCol].vehicle==0)?'E':'F') << '\n';
+//			cout << "Type is " << ( (m_cityGrid[iRow][iCol].type==BUILDING)?'B':'N') << '\n';
+			break;
+		default:
+			break;
+		}
 	}
 
 	void City::TranslateVehicles()
@@ -168,7 +219,7 @@ namespace ns3
 		 */
 
 		// start by locating the first horizontal road (3 consecutive RRR)
-		for(int iRow = 1; iRow<=(m_gridSize); iRow++)
+		for(int iRow = 1; iRow<=m_gridSize; iRow++)
 		{
 			if(m_cityGrid[iRow][1].type==ROAD && m_cityGrid[iRow][2].type==ROAD && m_cityGrid[iRow][3].type==ROAD)
 			{
@@ -176,31 +227,40 @@ namespace ns3
 				// first horizontal lane from top runs eastbound, so we're at the start
 
 				// run through each vehicle, frontmost first
-				for(int iCol = 1; iCol<=(m_gridSize); iCol++)
+				for(int iCol = 1; iCol<=m_gridSize; iCol++)
 				{
 					if(m_cityGrid[iRow][iCol].vehicle!=0) // there's a vehicle here
 					{
 						// movement rules for eastbound vehicle
-						if(m_cityGrid[iRow][iCol].vehicle->IsParked())
+						if(m_cityGrid[iRow][iCol].type==INTERSECTION)
 						{
-							// TODO evaluate chance of leaving parking
-
-						} else if(m_cityGrid[iRow][iCol].type==INTERSECTION)
-						{
-							// TODO if current cell is marked as INTERSECTION, evaluate turning probability
+							// if current cell is marked as INTERSECTION, evaluate turning probability
 							double willItTurn = randomNum.GetValue();
 							if( willItTurn > (1-m_probTurnLeft) ) // top m_probTurnLeft percent
 							{
 								// turn left
+								if(m_cityGrid[iRow+2][iCol-1].vehicle==0)
+								{
+									m_cityGrid[iRow+2][iCol-1].vehicle = m_cityGrid[iRow][iCol].vehicle;
+									m_cityGrid[iRow][iCol].vehicle = 0;
+								}
 
 							} else if( willItTurn < m_probTurnRight) // bottom m_probTurnRight percent
 							{
 								// turn right
-
+								if(m_cityGrid[iRow-1][iCol].vehicle==0)	// if no-one at the turn (else halt)
+								{
+									m_cityGrid[iRow-1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
+									m_cityGrid[iRow][iCol].vehicle = 0;
+								}
 							} else
 							{
 								// remainder probability, go straight ahead
-
+								if(m_cityGrid[iRow][iCol-2].vehicle==0)
+								{
+									m_cityGrid[iRow][iCol-2].vehicle = m_cityGrid[iRow][iCol].vehicle;
+									m_cityGrid[iRow][iCol].vehicle = 0;
+								}
 							}
 
 						} else if(m_cityGrid[iRow][iCol].vehicle->GetVelocity()==0)
@@ -232,17 +292,18 @@ namespace ns3
 								m_cityGrid[iRow][iCol].vehicle->SetParked(true);
 								m_cityGrid[iRow-1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle = 0;
+								// TODO AddParkedVehicle(m_cityGrid[iRow][iCol].vehicle);
 							} else if (m_cityGrid[iRow][iCol].vehicle->GetVelocity()==1)
 							{
 								// move forward 1, evaluate speeding up to 2cells/step
-								if( (m_cityGrid[iRow][iCol-2].vehicle==0) && (m_cityGrid[iRow][iCol-3].vehicle==0) )
+								if( (m_cityGrid[iRow][iCol-2].vehicle==0) && (m_cityGrid[iRow][iCol-3].vehicle==0) && (m_cityGrid[iRow][iCol-2].type==ROAD))	// road ahead is clear
 									m_cityGrid[iRow][iCol].vehicle->SetVelocity(2);
 								m_cityGrid[iRow][iCol-1].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle = 0;
 							} else if(m_cityGrid[iRow][iCol].vehicle->GetVelocity()==2)
 							{
 								// see if we can move to iCol-2, else move to iCol-1 and decrease speed to 1
-								if(m_cityGrid[iRow][iCol-2].vehicle==0)
+								if(m_cityGrid[iRow][iCol-2].vehicle==0 && m_cityGrid[iRow][iCol-2].type==ROAD)	// also makes vehicles slow down before intersections
 								{
 									m_cityGrid[iRow][iCol-2].vehicle = m_cityGrid[iRow][iCol].vehicle;
 									m_cityGrid[iRow][iCol].vehicle = 0;
@@ -253,14 +314,10 @@ namespace ns3
 									m_cityGrid[iRow][iCol].vehicle = 0;
 								}
 							}
-
 						}
-
-
-					}
+ 					}
 				}
 			}
-
 			// now increase iRow and process westbound lane (starts on m_gridSize, vehicles in front have larger index)
 			iRow++;
 			// TODO
@@ -270,32 +327,40 @@ namespace ns3
 
 		// now repeat for columns
 		// this is gonna be hard, no straight vectors in columnspace. Use numerals m_cityGrid[x][y]
-		for(int iCol = 1; iCol<=(m_gridSize); iCol++)
+		// TODO this blows up
+//		for(int iCol = 1; iCol<=(m_gridSize); iCol++)
+//		{
+//			if(m_cityGrid[1][iCol].type==ROAD && m_cityGrid[2][iCol].type==ROAD && m_cityGrid[3][iCol].type==ROAD)
+//			{
+//				// we're at a vertical road
+//				// first vertical road is southbound, start at the end
+//				for(int iRow=(m_gridSize); iRow>0; iRow--)
+//				{
+//					if(m_cityGrid[iRow][iCol].vehicle!=0)
+//					{
+//						// TODO movement rules for southbound vehicle
+//					}
+//				}
+//
+//				/* * * * * * */
+//
+//				// now jump to the next lane, and start from the top (northbound traffic)
+//				iCol++;	// could bork if last lane is alone at the city's end
+//				for(int iRow=1; iRow<=(m_gridSize); iRow++)
+//				{
+//					if(m_cityGrid[iRow][iCol].vehicle!=0)
+//					{
+//						// TODO movement rules for northbound vehicle
+//					}
+//				}
+//			}
+//		}
+
+		// TODO evaluate parked vehicles, as they're outside road cells
 		{
-			if(m_cityGrid[1][iCol].type==ROAD && m_cityGrid[2][iCol].type==ROAD && m_cityGrid[3][iCol].type==ROAD)
-			{
-				// we're at a vertical road
-				// first vertical road is southbound, start at the end
-				for(int iRow=(m_gridSize); iRow>0; iRow--)
-				{
-					if(m_cityGrid[iRow][iCol].vehicle!=0)
-					{
-						// TODO movement rules for southbound vehicle
-					}
-				}
+			// need a variable that holds pointers to parked vehicles
+			// RemoveParkedVehicle(vehicle);
 
-				/* * * * * * */
-
-				// now jump to the next lane, and start from the top (northbound traffic)
-				iCol++;	// could bork if last lane is alone at the city's end
-				for(int iRow=1; iRow<=(m_gridSize); iRow++)
-				{
-					if(m_cityGrid[iRow][iCol].vehicle!=0)
-					{
-						// TODO movement rules for northbound vehicle
-					}
-				}
-			}
 		}
 
 		Simulator::Schedule(Seconds(m_dt), &City::Step, Ptr<City>(this));
@@ -321,9 +386,9 @@ namespace ns3
 	void City::SetControlVehicleCallback(Callback<bool, Ptr<City>, Ptr<Vehicle>, double> controlVehicle)
 		{ m_controlVehicle = controlVehicle; }
 
-	Callback<bool, Ptr<City>, int&> City::GetInitVehicleCallback()
-		{ return m_initVehicle; }
+	Callback<bool, Ptr<City> > City::GetInitVehiclesCallback()
+		{ return m_initVehicles; }
 
-	void City::SetInitVehiclesCallback(Callback<bool, Ptr<City>, int&> initVehicle)
-		{ m_initVehicle = initVehicle; }
+	void City::SetInitVehiclesCallback(Callback<bool, Ptr<City> > initVehicles)
+		{ m_initVehicles = initVehicles; }
 }

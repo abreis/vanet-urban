@@ -35,6 +35,10 @@ namespace ns3
 		m_vehicleId = 1;
 		m_velocity = 0.0;
 		is_alive=true;
+		is_rsu=false;
+		is_silent=false;
+		is_parked=false;
+		m_velocity=1;
 	}
 
 	Vehicle::~Vehicle()

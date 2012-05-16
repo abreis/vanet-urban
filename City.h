@@ -21,16 +21,25 @@
 #ifndef CLASS_CITY_
 #define CLASS_CITY_
 
+#include <vector>
+#include <list>
+#include <iostream>
+#include <iomanip>
+#include <math.h>
 #include "ns3/callback.h"
 #include "ns3/ptr.h"
 #include "ns3/object.h"
 #include "ns3/random-variable.h"
-#include <vector>
+#include "ns3/simulator.h"
 #include "Vehicle.h"
 #include "VanetHeader.h"
 
+
 namespace ns3
 {
+	enum CellType {ROAD, INTERSECTION, BUILDING, PARKING};
+	enum CellOrientation {RANDOM, TOPLEFT, TOPRIGHT, RIGHTTOP, RIGHTBOTTOM, BOTTOMRIGHT, BOTTOMLEFT, LEFTBOTTOM, LEFTTOP};
+
 	// Setup a grid-like system for cars to travel in
 	class City: public ns3::Object
 	{
@@ -38,7 +47,6 @@ namespace ns3
 			/*
 			 * Grid size and cell size are hardcoded to 2km, 5m, 160000 cells
 			 */
-			enum CellType {ROAD, INTERSECTION, BUILDING, PARKING};
 			typedef struct
 			{
 				Ptr<Vehicle> vehicle;
@@ -55,12 +63,15 @@ namespace ns3
 			double m_probTurnRight;				// probability of turning right
 
 			std::vector< std::vector< Cell > > m_cityGrid;
+			std::list< Ptr<Vehicle> > m_Vehicles;		// holds vehicles in the network
+			std::list< Ptr<Vehicle> > m_parkedVehicles;	// holds vehicles that parked
+			std::list< Ptr<Vehicle> > m_RSUs;			// holds vehicles that became RSUs
 
 			void InitCity();
 			void TranslateVehicles();
 
 			Callback<bool, Ptr<City> ,Ptr<Vehicle> , double> m_controlVehicle;
-			Callback<bool, Ptr<City>, int&> m_initVehicle;
+			Callback<bool, Ptr<City> > m_initVehicles;
 			VehicleReceiveCallback m_receiveData;
 
 		public:
@@ -74,6 +85,8 @@ namespace ns3
 			double GetDeltaT(void);
 			void SetDeltaT(double value);
 
+			Ptr<Vehicle> CreateVehicle (void);
+			void AddVehicle(Ptr<Vehicle> veh, CellOrientation ort);
 			void printCityStruct(void);
 			void printCityPointVehicles(void);
 
@@ -81,8 +94,8 @@ namespace ns3
 			void SetReceiveDataCallback(VehicleReceiveCallback receiveData);
 			Callback<bool, Ptr<City> ,Ptr<Vehicle> , double> GetControlVehicleCallback();
 			void SetControlVehicleCallback(Callback<bool, Ptr<City> ,Ptr<Vehicle> , double> controlVehicle);
-			Callback<bool, Ptr<City>, int&> GetInitVehicleCallback();
-			void SetInitVehiclesCallback(Callback<bool, Ptr<City>, int&> initVehicle);
+			Callback<bool, Ptr<City> > GetInitVehiclesCallback();
+			void SetInitVehiclesCallback(Callback<bool, Ptr<City> > initVehicles);
 			/**
 			* Runs one mobility Step for the given City.
 			* This function is called each interval dt to simulated the mobility through TranslateVehicles().
