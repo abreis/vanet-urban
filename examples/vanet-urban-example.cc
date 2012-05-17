@@ -55,13 +55,13 @@ static bool InitVehicles(Ptr<City> City)
 //	testDummy01->AddPacket(vHeader);
 	Simulator::Schedule(Seconds(0.5), &ns3::City::AddVehicle, g_City, testDummy01, RIGHTTOP);
 
-	return true;
+	return(true);
 }
 
 static bool ControlVehicle(Ptr<City> City, Ptr<Vehicle> vehicle, double dt)
 {
 	// called for every vehicle, on each time step
-	return true;
+	return(true);
 }
 
 static void ReceiveData(Ptr<Vehicle> vehicle, VanetHeader packet)
@@ -75,18 +75,21 @@ int main (int argc, char *argv[])
 	float simTime=1000.0;				// simulation time
 	int runNumber=1;					// run number
 	double deltaT=1;					// simulation step, max resolution is 1 step per deltaT
-	int gridSize=2000/5;
+	int gridSize=400;					// grid size^2, default 400x400 (5m cells, 2x2km)
+	double parkProb=0.001;
 
 	// Process command-line args
 	CommandLine cmd;
 	cmd.AddValue ("time", "simulation time", simTime);
 	cmd.AddValue ("rn", "run number", runNumber);
 	cmd.AddValue ("gridsize", "sqrt(cells)", gridSize);
+	cmd.AddValue ("parkprob", "parking probability (per vehicle per second)", parkProb);
 	cmd.Parse(argc, argv);
 
 	// Setup a City
 	g_City->SetDeltaT(deltaT);
-//	g_City->SetGridSize(gridSize);
+	g_City->SetGridSize(gridSize);
+	g_City->SetParkProb(parkProb);
 
 	// Bind the City/Vehicle events to the event handlers
 	g_City->SetInitVehiclesCallback(MakeCallback(&InitVehicles));

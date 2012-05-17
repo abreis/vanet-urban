@@ -35,13 +35,13 @@ TypeId VanetHeader::GetTypeId (void)
 	static TypeId tid = TypeId ("ns3::VanetHeader")
 		.SetParent<Header> ()
 		.AddConstructor<VanetHeader> ();
-	return tid;
+	return(tid);
 }
 
 TypeId
 VanetHeader::GetInstanceTypeId (void) const
 {
-	return GetTypeId ();
+	return(GetTypeId());
 }
 
 void
@@ -58,7 +58,7 @@ uint32_t
 VanetHeader::GetSerializedSize (void) const
 {
 	// we reserve 12 bytes for our header (2*16+1*64).
-	return 12;
+	return(12);
 }
 
 void
@@ -82,7 +82,7 @@ VanetHeader::Deserialize (Buffer::Iterator start)
 	m_timestamp = start.ReadNtohU64 ();
 
 	// we return the number of bytes effectively read.
-	return 12;
+	return(12);
 }
 
 void VanetHeader::SetSource(int src)
@@ -103,15 +103,15 @@ void VanetHeader::SetTimestamp(double time)
 
 int VanetHeader::GetSource(void) const
 {
-	return (int)m_src;
+	return((int)m_src);
 }
 
 unsigned int VanetHeader::GetID(void) const
 {
-	return (unsigned int)m_id;
+	return((unsigned int)m_id);
 }
 
 double VanetHeader::GetTimestamp(void) const
 {
-	return ((double) m_timestamp)/1000000.0;
+	return(((double) m_timestamp)/1000000.0);
 }

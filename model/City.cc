@@ -25,7 +25,31 @@ namespace ns3
 	TypeId City::GetTypeId (void)
 	{
 		static TypeId tid = TypeId ("ns3::City").SetParent<Object>().AddConstructor<City>();
-		return tid;
+		return(tid);
+	}
+
+	void City::Start()
+	{
+		InitCity();
+		Simulator::Schedule(Seconds(0.0), &Step, Ptr<City>(this));
+	}
+
+	void City::Stop()
+		{ }
+
+	City::City()
+	{
+		/* set defaults */
+		m_dt=1;
+		m_gridSize=2000/5;
+		m_probPark = 0.001;
+		m_probTurnLeft = 0.25;
+		m_probTurnRight = 0.25;
+	}
+
+	City::~City()
+	{
+
 	}
 
 	void City::InitCity()
@@ -97,44 +121,18 @@ namespace ns3
 
 	}
 
-	void City::Start()
-	{
-		InitCity();
-		Simulator::Schedule(Seconds(0.0), &Step, Ptr<City>(this));
-	}
-
-	void City::Stop()
-		{ }
-
-	City::City()
-	{
-		/* set defaults */
-		m_dt=1;
-		m_gridSize=2000/5;
-		m_probPark = 0.001;
-		m_probTurnLeft = 0.25;
-		m_probTurnRight = 0.25;
-	}
-
-	City::~City()
-	{
-
-	}
-
 	void City::printCityStruct(void)
 	{
 		int rowNum=0;
-		vector< vector< Cell > >::const_iterator rowiterator;
-		for(rowiterator=m_cityGrid.begin(); rowiterator!=m_cityGrid.end(); rowiterator++)
+		for(int iRow = 0; iRow<m_gridSize; iRow++)
 		{
-			cout << setw(3) << ++rowNum << ' ';
-			vector< Cell >::const_iterator coliterator;
-			for(coliterator=rowiterator->begin(); coliterator!=rowiterator->end(); coliterator++)
+			cout << setw(3) << rowNum++ << ' ';
+			for(int iCol = 0; iCol<m_gridSize; iCol++)
 			{
-				switch(coliterator->type)
+				switch(m_cityGrid[iRow][iCol].type)
 				{
 					case ROAD: cout << 'R'; break;
-					case BUILDING: cout << 'B'; break;
+					case BUILDING: cout << ' '; break;
 					case INTERSECTION: cout << 'I'; break;
 					case PARKING: cout << 'P'; break;
 				}
@@ -146,18 +144,15 @@ namespace ns3
 	void City::printCityPointVehicles(void)
 	{
 		int rowNum=0;
-//		vector< vector< Cell > >::const_iterator rowiterator;
-//		for(rowiterator=m_cityGrid.begin(); rowiterator!=m_cityGrid.end(); rowiterator++)
-		// TODO this blows up
-		for(int iRow = 1; iRow<=m_gridSize; iRow++)
+		for(int iRow = 0; iRow<m_gridSize; iRow++)
 		{
-			cout << setw(3) << ++rowNum << ' ';
-//			vector< Cell >::const_iterator coliterator;
-//			for(coliterator=rowiterator->begin(); coliterator!=rowiterator->end(); coliterator++)
-			for(int iCol = 1; iCol<=m_gridSize; iCol++)
+			cout << setw(3) << rowNum++ << ' ';
+			for(int iCol = 0; iCol<m_gridSize; iCol++)
 			{
 				if(m_cityGrid[iRow][iCol].type==BUILDING) cout << ' ';
-					else { if(m_cityGrid[iRow][iCol].vehicle==0) cout << '0'; else cout << '1'; }
+				else if(m_cityGrid[iRow][iCol].vehicle!=0) cout << '1';
+				else if(m_cityGrid[iRow][iCol].type==PARKING) cout << '-';
+				else cout << '0';
 			}
 			cout << '\n';
 		}
@@ -177,37 +172,34 @@ namespace ns3
 	{
 		Ptr<Vehicle> veh = CreateObject<Vehicle>();
 		veh->SetReceiveCallback(m_receiveData);
-		return veh;
+		return(veh);
 	}
 
 
 	void City::AddVehicle(Ptr<Vehicle> veh, CellOrientation ort)
 	{
-		ns3::Time nowtime = ns3::Simulator::Now();
-		cout << nowtime.ns3::Time::GetSeconds() << " NEW \n";
-
-		int iRow, iCol;
+		int iRow=0, iCol=0;
 		switch(ort)
 		{
 		case LEFTTOP:	// westbound
-			for(iRow = 1; !(m_cityGrid[iRow][1].type==ROAD && m_cityGrid[iRow][2].type==ROAD && m_cityGrid[iRow][3].type==ROAD); iRow++)
-			for(iCol = 1; m_cityGrid[iRow+1][iCol].vehicle!=0; iCol++);	// find empty cell on westbound lane
+			for(iRow = 0; !(m_cityGrid[iRow][0].type==ROAD && m_cityGrid[iRow][1].type==ROAD && m_cityGrid[iRow][2].type==ROAD); iRow++)
+			for(iCol = 0; m_cityGrid[iRow+1][iCol].vehicle!=0; iCol++);	// find empty cell on westbound lane
 			m_cityGrid[iRow+1][iCol].vehicle=veh;
 			m_Vehicles.push_back(veh);
 			break;
 
 		case RIGHTTOP:	// eastbound
-			for(iRow = 1; !(m_cityGrid[iRow][1].type==ROAD && m_cityGrid[iRow][2].type==ROAD && m_cityGrid[iRow][3].type==ROAD); iRow++)
-			for(iCol = m_gridSize; m_cityGrid[iRow][iCol].vehicle!=0; iCol--);	// find empty cell on eastbound lane
+			for(iRow = 0; !(m_cityGrid[iRow][0].type==ROAD && m_cityGrid[iRow][1].type==ROAD && m_cityGrid[iRow][2].type==ROAD); iRow++)
+			for(iCol = (m_gridSize-1); m_cityGrid[iRow][iCol].vehicle!=0; iCol--);	// find empty cell on eastbound lane
 			m_cityGrid[iRow][iCol].vehicle=veh;
 			m_Vehicles.push_back(veh);
-			cout << "New vehicle on " << iRow << ' ' << iCol << '\n';
-//			cout << "Position is " << ( (m_cityGrid[iRow][iCol].vehicle==0)?'E':'F') << '\n';
-//			cout << "Type is " << ( (m_cityGrid[iRow][iCol].type==BUILDING)?'B':'N') << '\n';
 			break;
 		default:
 			break;
 		}
+
+		ns3::Time nowtime = ns3::Simulator::Now();
+		cout << nowtime.ns3::Time::GetSeconds() << " NEW   [" << iRow << "][" << iCol << "]\n";
 	}
 
 	void City::TranslateVehicles()
@@ -219,15 +211,15 @@ namespace ns3
 		 */
 
 		// start by locating the first horizontal road (3 consecutive RRR)
-		for(int iRow = 1; iRow<=m_gridSize; iRow++)
+		for(int iRow = 0; iRow<m_gridSize; iRow++)
 		{
-			if(m_cityGrid[iRow][1].type==ROAD && m_cityGrid[iRow][2].type==ROAD && m_cityGrid[iRow][3].type==ROAD)
+			if(m_cityGrid[iRow][0].type==ROAD && m_cityGrid[iRow][1].type==ROAD && m_cityGrid[iRow][2].type==ROAD)
 			{
 				// we're at a horizontal road
 				// first horizontal lane from top runs eastbound, so we're at the start
 
 				// run through each vehicle, frontmost first
-				for(int iCol = 1; iCol<=m_gridSize; iCol++)
+				for(int iCol = 0; iCol<m_gridSize; iCol++)
 				{
 					if(m_cityGrid[iRow][iCol].vehicle!=0) // there's a vehicle here
 					{
@@ -269,10 +261,10 @@ namespace ns3
 							if(m_cityGrid[iRow][iCol-1].vehicle==0)	// no vehicles ahead of us, accelerate
 								m_cityGrid[iRow][iCol].vehicle->SetVelocity(1);
 
-						} else if(iCol<=2)
+						} else if(iCol<2)
 						{
 							// turn around at the end of the road
-							int entryOnOppositeLane=1;
+							int entryOnOppositeLane=0;
 							while(m_cityGrid[iRow+1][entryOnOppositeLane].vehicle!=0)	// find an empty spot on the opposite lane
 								entryOnOppositeLane++;
 							m_cityGrid[iRow+1][entryOnOppositeLane].vehicle = m_cityGrid[iRow][iCol].vehicle;
@@ -280,7 +272,7 @@ namespace ns3
 
 						} else if(m_cityGrid[iRow][iCol-1].vehicle!=0)
 						{
-							// stop immediately if right next to next vehicle
+							// stop immediately if right next to a vehicle
 							m_cityGrid[iRow][iCol].vehicle->SetVelocity(0);
 
 						} else
@@ -289,10 +281,14 @@ namespace ns3
 							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow-1][iCol].type==PARKING))
 							{
 								// park the vehicle
+								m_parkedVehicles.push_back(m_cityGrid[iRow][iCol].vehicle);
+
 								m_cityGrid[iRow][iCol].vehicle->SetParked(true);
 								m_cityGrid[iRow-1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle = 0;
-								// TODO AddParkedVehicle(m_cityGrid[iRow][iCol].vehicle);
+
+								ns3::Time nowtime = ns3::Simulator::Now();
+								cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow-1) << "][" << iCol << "]\n";
 							} else if (m_cityGrid[iRow][iCol].vehicle->GetVelocity()==1)
 							{
 								// move forward 1, evaluate speeding up to 2cells/step
@@ -367,27 +363,33 @@ namespace ns3
 	}
 
 	double City::GetDeltaT()
-		{ return m_dt; }
+		{ return(m_dt); }
 
 	void City::SetDeltaT(double value)
 		{ m_dt=value; }
 
+	void City::SetParkProb(double value)
+		{ m_probPark=value; }
+
+	void City::SetGridSize(int value)
+		{ m_gridSize=value; }
+
 	/* Callbacks */
 
 	Callback<void, Ptr<Vehicle>, VanetHeader> City::GetReceiveDataCallback()
-		{ return m_receiveData; }
+		{ return(m_receiveData); }
 
 	void City::SetReceiveDataCallback(Callback<void, Ptr<Vehicle>, VanetHeader> receiveData)
 		{ m_receiveData = receiveData; }
 
 	Callback<bool, Ptr<City>, Ptr<Vehicle>, double> City::GetControlVehicleCallback()
-		{ return m_controlVehicle; }
+		{ return(m_controlVehicle); }
 
 	void City::SetControlVehicleCallback(Callback<bool, Ptr<City>, Ptr<Vehicle>, double> controlVehicle)
 		{ m_controlVehicle = controlVehicle; }
 
 	Callback<bool, Ptr<City> > City::GetInitVehiclesCallback()
-		{ return m_initVehicles; }
+		{ return(m_initVehicles); }
 
 	void City::SetInitVehiclesCallback(Callback<bool, Ptr<City> > initVehicles)
 		{ m_initVehicles = initVehicles; }

@@ -27,7 +27,7 @@ namespace ns3
 		static TypeId tid = TypeId ("ns3::Vehicle")
 			.SetParent<Object> ()
 			.AddConstructor<Vehicle> ();
-		return tid;
+		return(tid);
 	}
 
 	Vehicle::Vehicle()
@@ -45,13 +45,13 @@ namespace ns3
 	{ }
 
 	int Vehicle::GetVehicleId()
-		{ return m_vehicleId; }
+		{ return(m_vehicleId); }
 
 	void Vehicle::SetVehicleId(int value)
 		{ m_vehicleId=value; }
 
 	double Vehicle::GetVelocity()
-		{ return m_velocity; }
+		{ return(m_velocity); }
 
 	void Vehicle::SetVelocity(double value)
 		{ m_velocity=value; }
@@ -60,35 +60,35 @@ namespace ns3
 	{
 		if(!m_receive.IsNull())
 			m_receive(Ptr<Vehicle>(this), packet);
-		return true;
+		return(true);
 	}
 
 	void Vehicle::SetAlive(bool status)
 		{ is_alive = status; }
 
 	bool Vehicle::IsAlive()
-		{ return is_alive; }
+		{ return(is_alive); }
 
 	void Vehicle::SetParked(bool parked)
 		{ is_parked = parked; }
 
 	bool Vehicle::IsParked()
-		{ return is_parked; }
+		{ return(is_parked); }
 
 	void Vehicle::SetRSU(bool rsu)
 		{ is_rsu = rsu; }
 
 	bool Vehicle::IsRSU()
-		{ return is_rsu; }
+		{ return(is_rsu); }
 
 	list<VanetHeader> Vehicle::GetPacketList()
-		{ return p_buffer; }
+		{ return(p_buffer); }
 
 	void Vehicle::AddPacket(VanetHeader header)
 		{ p_buffer.push_back(header); }
 
 	VehicleReceiveCallback Vehicle::GetReceiveCallback()
-		{ return m_receive; }
+		{ return(m_receive); }
 
 	void Vehicle::SetReceiveCallback(VehicleReceiveCallback receive)
 		{ m_receive = receive; }

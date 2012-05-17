@@ -84,6 +84,8 @@ namespace ns3
 
 			double GetDeltaT(void);
 			void SetDeltaT(double value);
+			void SetParkProb(double value);
+			void SetGridSize(int value);
 
 			Ptr<Vehicle> CreateVehicle (void);
 			void AddVehicle(Ptr<Vehicle> veh, CellOrientation ort);
