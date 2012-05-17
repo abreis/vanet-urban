@@ -21,8 +21,8 @@
 
 #include <iostream>
 #include "ns3/core-module.h"
-#include "City.h"
-#include "VanetHeader.h"
+#include "ns3/City.h"
+#include "ns3/VanetHeader.h"
 
 using namespace ns3;
 using namespace std;
