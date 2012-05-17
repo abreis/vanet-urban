@@ -627,12 +627,41 @@ namespace ns3
 			}	// end of current lane pair
 		}	// end of column iterator
 
-		// TODO evaluate parked vehicles, as they're outside road cells
-		{
-			// need a variable that holds pointers to parked vehicles
-			// RemoveParkedVehicle(vehicle);
-
-		}
+		// evaluate parked vehicles, as they're outside road cells
+		for(iRow=0; iRow<m_gridSize; iRow++)
+			for(iCol=0; iCol<m_gridSize; iCol++)
+			{
+				if(m_cityGrid[iRow][iCol].vehicle!=0)	// we have a vehicle
+					if(m_cityGrid[iRow][iCol].vehicle->IsParked()==true)	// it's parked
+						if(randomNum.GetValue()<m_probPark)	// it'll unpark
+						{
+							// unpark the vehicle
+							if(m_cityGrid[iRow+1][iCol].type==ROAD && m_cityGrid[iRow+1][iCol].vehicle==0)	// unpark to the south
+							{
+								m_cityGrid[iRow][iCol].vehicle->SetParked(false);
+								m_cityGrid[iRow+1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
+								m_cityGrid[iRow][iCol].vehicle=0;
+							}
+							else if(m_cityGrid[iRow-1][iCol].type==ROAD && m_cityGrid[iRow-1][iCol].vehicle==0) // unpark to the north
+							{
+								m_cityGrid[iRow][iCol].vehicle->SetParked(false);
+								m_cityGrid[iRow-1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
+								m_cityGrid[iRow][iCol].vehicle=0;
+							}
+							else if(m_cityGrid[iRow][iCol+1].type==ROAD && m_cityGrid[iRow][iCol+1].vehicle==0) // unpark to the west
+							{
+								m_cityGrid[iRow][iCol].vehicle->SetParked(false);
+								m_cityGrid[iRow][iCol+1].vehicle = m_cityGrid[iRow][iCol].vehicle;
+								m_cityGrid[iRow][iCol].vehicle=0;
+							}
+							else if(m_cityGrid[iRow][iCol-1].type==ROAD && m_cityGrid[iRow][iCol-1].vehicle==0) // unpark to the east
+							{
+								m_cityGrid[iRow][iCol].vehicle->SetParked(false);
+								m_cityGrid[iRow][iCol-1].vehicle = m_cityGrid[iRow][iCol].vehicle;
+								m_cityGrid[iRow][iCol].vehicle=0;
+							}
+						}
+			}
 
 		Simulator::Schedule(Seconds(m_dt), &City::Step, Ptr<City>(this));
 	}
