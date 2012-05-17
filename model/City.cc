@@ -209,9 +209,10 @@ namespace ns3
 		 * - Update horizontal first, vertical second
 		 * - Update a single lane at a time, starting from the front vehicle to the back
 		 */
+		int iRow=0, iCol=0;
 
 		// start by locating the first horizontal road (3 consecutive RRR)
-		for(int iRow = 0; iRow<m_gridSize; iRow++)
+		for(iRow = 0; iRow<m_gridSize; iRow++)
 		{
 			if(m_cityGrid[iRow][0].type==ROAD && m_cityGrid[iRow][1].type==ROAD && m_cityGrid[iRow][2].type==ROAD)
 			{
@@ -219,9 +220,11 @@ namespace ns3
 				// first horizontal lane from top runs eastbound, so we're at the start
 
 				// run through each vehicle, frontmost first
-				for(int iCol = 0; iCol<m_gridSize; iCol++)
+				for(iCol = 0; iCol<m_gridSize; iCol++)
 				{
-					if(m_cityGrid[iRow][iCol].vehicle!=0) // there's a vehicle here
+					if(m_cityGrid[iRow][iCol].vehicle!=0 &&
+							!(m_cityGrid[iRow][iCol].type==INTERSECTION && m_cityGrid[iRow][iCol+1].type==INTERSECTION)
+							) // there's a vehicle here and it belongs to this lane already
 					{
 						// movement rules for eastbound vehicle
 						if(m_cityGrid[iRow][iCol].type==INTERSECTION)
@@ -288,7 +291,7 @@ namespace ns3
 								m_cityGrid[iRow][iCol].vehicle = 0;
 
 								ns3::Time nowtime = ns3::Simulator::Now();
-								cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow-1) << "][" << iCol << "]\n";
+								cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow-1) << "][" << (iCol) << "]\n";
 							} else if (m_cityGrid[iRow][iCol].vehicle->GetVelocity()==1)
 							{
 								// move forward 1, evaluate speeding up to 2cells/step
@@ -313,44 +316,316 @@ namespace ns3
 						}
  					}
 				}
-			}
-			// now increase iRow and process westbound lane (starts on m_gridSize, vehicles in front have larger index)
-			iRow++;
-			// TODO
 
+				// now increase iRow and process westbound lane (starts on m_gridSize, vehicles in front have larger index)
+				iRow++;
+				for(iCol = (m_gridSize-1); iCol>=0; iCol--)
+				{
+					if(m_cityGrid[iRow][iCol].vehicle!=0 &&
+							!(m_cityGrid[iRow][iCol].type==INTERSECTION && m_cityGrid[iRow][iCol-1].type==INTERSECTION)
+							) // there's a vehicle here and it belongs to this lane already
+					{
+						// movement rules for eastbound vehicle
+						if(m_cityGrid[iRow][iCol].type==INTERSECTION)
+						{
+							// if current cell is marked as INTERSECTION, evaluate turning probability
+							double willItTurn = randomNum.GetValue();
+							if( willItTurn > (1-m_probTurnLeft) ) // top m_probTurnLeft percent
+							{
+								// turn left
+								if(m_cityGrid[iRow-2][iCol+1].vehicle==0)
+								{
+									m_cityGrid[iRow-2][iCol+1].vehicle = m_cityGrid[iRow][iCol].vehicle;
+									m_cityGrid[iRow][iCol].vehicle = 0;
+								}
+
+							} else if( willItTurn < m_probTurnRight) // bottom m_probTurnRight percent
+							{
+								// turn right
+								if(m_cityGrid[iRow+1][iCol].vehicle==0)	// if no-one at the turn (else halt)
+								{
+									m_cityGrid[iRow+1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
+									m_cityGrid[iRow][iCol].vehicle = 0;
+								}
+							} else
+							{
+								// remainder probability, go straight ahead
+								if(m_cityGrid[iRow][iCol+2].vehicle==0)
+								{
+									m_cityGrid[iRow][iCol+2].vehicle = m_cityGrid[iRow][iCol].vehicle;
+									m_cityGrid[iRow][iCol].vehicle = 0;
+								}
+							}
+
+						} else if(m_cityGrid[iRow][iCol].vehicle->GetVelocity()==0)
+						{
+							// if vehicle is stopped, see if moving forward is possible
+							if(m_cityGrid[iRow][iCol+1].vehicle==0)	// no vehicles ahead of us, accelerate
+								m_cityGrid[iRow][iCol].vehicle->SetVelocity(1);
+
+						} else if(iCol>(m_gridSize-3))
+						{
+							// turn around at the end of the road
+							int entryOnOppositeLane=m_gridSize-1;
+							while(m_cityGrid[iRow-1][entryOnOppositeLane].vehicle!=0)	// find an empty spot on the opposite lane
+								entryOnOppositeLane--;
+							m_cityGrid[iRow-1][entryOnOppositeLane].vehicle = m_cityGrid[iRow][iCol].vehicle;
+							m_cityGrid[iRow][iCol].vehicle = 0;
+
+						} else if(m_cityGrid[iRow][iCol+1].vehicle!=0)
+						{
+							// stop immediately if right next to a vehicle
+							m_cityGrid[iRow][iCol].vehicle->SetVelocity(0);
+
+						} else
+						{
+							// vehicle is free to move, check for frontmost vehicles and evaluate parking probability
+							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow+1][iCol].type==PARKING))
+							{
+								// park the vehicle
+								m_parkedVehicles.push_back(m_cityGrid[iRow][iCol].vehicle);
+
+								m_cityGrid[iRow][iCol].vehicle->SetParked(true);
+								m_cityGrid[iRow+1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
+								m_cityGrid[iRow][iCol].vehicle = 0;
+
+								ns3::Time nowtime = ns3::Simulator::Now();
+								cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow+1) << "][" << (iCol) << "]\n";
+							} else if (m_cityGrid[iRow][iCol].vehicle->GetVelocity()==1)
+							{
+								// move forward 1, evaluate speeding up to 2cells/step
+								if( (m_cityGrid[iRow][iCol+2].vehicle==0) && (m_cityGrid[iRow][iCol+3].vehicle==0) && (m_cityGrid[iRow][iCol+2].type==ROAD))	// road ahead is clear
+									m_cityGrid[iRow][iCol].vehicle->SetVelocity(2);
+								m_cityGrid[iRow][iCol+1].vehicle = m_cityGrid[iRow][iCol].vehicle;
+								m_cityGrid[iRow][iCol].vehicle = 0;
+							} else if(m_cityGrid[iRow][iCol].vehicle->GetVelocity()==2)
+							{
+								// see if we can move to iCol+2, else move to iCol+1 and decrease speed to 1
+								if(m_cityGrid[iRow][iCol+2].vehicle==0 && m_cityGrid[iRow][iCol+2].type==ROAD)	// also makes vehicles slow down before intersections
+								{
+									m_cityGrid[iRow][iCol+2].vehicle = m_cityGrid[iRow][iCol].vehicle;
+									m_cityGrid[iRow][iCol].vehicle = 0;
+								} else
+								{
+									m_cityGrid[iRow][iCol].vehicle->SetVelocity(1);
+									m_cityGrid[iRow][iCol+1].vehicle = m_cityGrid[iRow][iCol].vehicle;
+									m_cityGrid[iRow][iCol].vehicle = 0;
+								}
+							}
+						}
+ 					}
+				}
+			}	// end of current lane pair
 		}	// end of row iterator
 
 
 		// now repeat for columns
-		// this is gonna be hard, no straight vectors in columnspace. Use numerals m_cityGrid[x][y]
-		// TODO this blows up
-//		for(int iCol = 1; iCol<=(m_gridSize); iCol++)
-//		{
-//			if(m_cityGrid[1][iCol].type==ROAD && m_cityGrid[2][iCol].type==ROAD && m_cityGrid[3][iCol].type==ROAD)
-//			{
-//				// we're at a vertical road
-//				// first vertical road is southbound, start at the end
-//				for(int iRow=(m_gridSize); iRow>0; iRow--)
-//				{
-//					if(m_cityGrid[iRow][iCol].vehicle!=0)
-//					{
-//						// TODO movement rules for southbound vehicle
-//					}
-//				}
-//
-//				/* * * * * * */
-//
-//				// now jump to the next lane, and start from the top (northbound traffic)
-//				iCol++;	// could bork if last lane is alone at the city's end
-//				for(int iRow=1; iRow<=(m_gridSize); iRow++)
-//				{
-//					if(m_cityGrid[iRow][iCol].vehicle!=0)
-//					{
-//						// TODO movement rules for northbound vehicle
-//					}
-//				}
-//			}
-//		}
+		// start by locating the first vertical road (3 consecutive RRR)
+		for(iCol = 0; iCol<m_gridSize; iCol++)
+		{
+			if(m_cityGrid[0][iCol].type==ROAD && m_cityGrid[1][iCol].type==ROAD && m_cityGrid[2][iCol].type==ROAD)
+			{
+				// we're at a vertical road
+				// first vertical lane from left runs southbound, go to the end
+
+				// run through each vehicle, frontmost first
+				for(iRow = (m_gridSize-1); iRow>=0; iRow--)
+				{
+					if(m_cityGrid[iRow][iCol].vehicle!=0 &&
+							!(m_cityGrid[iRow][iCol].type==INTERSECTION && m_cityGrid[iRow-1][iCol].type==INTERSECTION)
+							) // there's a vehicle here and it belongs to this lane already
+					{
+						// movement rules for eastbound vehicle
+						if(m_cityGrid[iRow][iCol].type==INTERSECTION)
+						{
+							// if current cell is marked as INTERSECTION, evaluate turning probability
+							double willItTurn = randomNum.GetValue();
+							if( willItTurn > (1-m_probTurnLeft) ) // top m_probTurnLeft percent
+							{
+								// turn left
+								if(m_cityGrid[iRow+1][iCol+2].vehicle==0)
+								{
+									m_cityGrid[iRow+1][iCol+2].vehicle = m_cityGrid[iRow][iCol].vehicle;
+									m_cityGrid[iRow][iCol].vehicle = 0;
+								}
+
+							} else if( willItTurn < m_probTurnRight) // bottom m_probTurnRight percent
+							{
+								// turn right
+								if(m_cityGrid[iRow][iCol-1].vehicle==0)	// if no-one at the turn (else halt)
+								{
+									m_cityGrid[iRow][iCol-1].vehicle = m_cityGrid[iRow][iCol].vehicle;
+									m_cityGrid[iRow][iCol].vehicle = 0;
+								}
+							} else
+							{
+								// remainder probability, go straight ahead
+								if(m_cityGrid[iRow+2][iCol].vehicle==0)
+								{
+									m_cityGrid[iRow+2][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
+									m_cityGrid[iRow][iCol].vehicle = 0;
+								}
+							}
+
+						} else if(m_cityGrid[iRow][iCol].vehicle->GetVelocity()==0)
+						{
+							// if vehicle is stopped, see if moving forward is possible
+							if(m_cityGrid[iRow+1][iCol].vehicle==0)	// no vehicles ahead of us, accelerate
+								m_cityGrid[iRow][iCol].vehicle->SetVelocity(1);
+
+						} else if(iRow>(m_gridSize-3))
+						{
+							// turn around at the end of the road
+							int entryOnOppositeLane=m_gridSize-1;
+							while(m_cityGrid[entryOnOppositeLane][iCol+1].vehicle!=0)	// find an empty spot on the opposite lane
+								entryOnOppositeLane--;
+							m_cityGrid[entryOnOppositeLane][iCol+1].vehicle = m_cityGrid[iRow][iCol].vehicle;
+							m_cityGrid[iRow][iCol].vehicle = 0;
+
+						} else if(m_cityGrid[iRow+1][iCol].vehicle!=0)
+						{
+							// stop immediately if right next to a vehicle
+							m_cityGrid[iRow][iCol].vehicle->SetVelocity(0);
+
+						} else
+						{
+							// vehicle is free to move, check for frontmost vehicles and evaluate parking probability
+							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow][iCol-1].type==PARKING))
+							{
+								// park the vehicle
+								m_parkedVehicles.push_back(m_cityGrid[iRow][iCol].vehicle);
+
+								m_cityGrid[iRow][iCol].vehicle->SetParked(true);
+								m_cityGrid[iRow][iCol-1].vehicle = m_cityGrid[iRow][iCol].vehicle;
+								m_cityGrid[iRow][iCol].vehicle = 0;
+
+								ns3::Time nowtime = ns3::Simulator::Now();
+								cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow) << "][" << (iCol-1) << "]\n";
+							} else if (m_cityGrid[iRow][iCol].vehicle->GetVelocity()==1)
+							{
+								// move forward 1, evaluate speeding up to 2cells/step
+								if( (m_cityGrid[iRow+2][iCol].vehicle==0) && (m_cityGrid[iRow+3][iCol].vehicle==0) && (m_cityGrid[iRow+2][iCol].type==ROAD))	// road ahead is clear
+									m_cityGrid[iRow][iCol].vehicle->SetVelocity(2);
+								m_cityGrid[iRow+1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
+								m_cityGrid[iRow][iCol].vehicle = 0;
+							} else if(m_cityGrid[iRow][iCol].vehicle->GetVelocity()==2)
+							{
+								// see if we can move to iRow+2, else move to iRow+1 and decrease speed to 1
+								if(m_cityGrid[iRow+2][iCol].vehicle==0 && m_cityGrid[iRow+2][iCol].type==ROAD)	// also makes vehicles slow down before intersections
+								{
+									m_cityGrid[iRow+2][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
+									m_cityGrid[iRow][iCol].vehicle = 0;
+								} else
+								{
+									m_cityGrid[iRow][iCol].vehicle->SetVelocity(1);
+									m_cityGrid[iRow+1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
+									m_cityGrid[iRow][iCol].vehicle = 0;
+								}
+							}
+						}
+ 					}
+				}
+
+				// now increase iCol and process northbound lane (starts on 0, vehicles in front have smaller index)
+				iCol++;
+				for(iRow = 0; iRow<m_gridSize; iRow++)
+				{
+					if(m_cityGrid[iRow][iCol].vehicle!=0 &&
+							!(m_cityGrid[iRow][iCol].type==INTERSECTION && m_cityGrid[iRow+1][iCol].type==INTERSECTION)
+							) // there's a vehicle here and it belongs to this lane already
+					{
+						// movement rules for eastbound vehicle
+						if(m_cityGrid[iRow][iCol].type==INTERSECTION)
+						{
+							// if current cell is marked as INTERSECTION, evaluate turning probability
+							double willItTurn = randomNum.GetValue();
+							if( willItTurn > (1-m_probTurnLeft) ) // top m_probTurnLeft percent
+							{
+								// turn left
+								if(m_cityGrid[iRow-1][iCol-2].vehicle==0)
+								{
+									m_cityGrid[iRow-1][iCol-2].vehicle = m_cityGrid[iRow][iCol].vehicle;
+									m_cityGrid[iRow][iCol].vehicle = 0;
+								}
+
+							} else if( willItTurn < m_probTurnRight) // bottom m_probTurnRight percent
+							{
+								// turn right
+								if(m_cityGrid[iRow][iCol+1].vehicle==0)	// if no-one at the turn (else halt)
+								{
+									m_cityGrid[iRow][iCol+1].vehicle = m_cityGrid[iRow][iCol].vehicle;
+									m_cityGrid[iRow][iCol].vehicle = 0;
+								}
+							} else
+							{
+								// remainder probability, go straight ahead
+								if(m_cityGrid[iRow-2][iCol].vehicle==0)
+								{
+									m_cityGrid[iRow-2][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
+									m_cityGrid[iRow][iCol].vehicle = 0;
+								}
+							}
+
+						} else if(m_cityGrid[iRow][iCol].vehicle->GetVelocity()==0)
+						{
+							// if vehicle is stopped, see if moving forward is possible
+							if(m_cityGrid[iRow-1][iCol].vehicle==0)	// no vehicles ahead of us, accelerate
+								m_cityGrid[iRow][iCol].vehicle->SetVelocity(1);
+
+						} else if(iRow<2)
+						{
+							// turn around at the end of the road
+							int entryOnOppositeLane=0;
+							while(m_cityGrid[entryOnOppositeLane][iCol-1].vehicle!=0)	// find an empty spot on the opposite lane
+								entryOnOppositeLane++;
+							m_cityGrid[entryOnOppositeLane][iCol-1].vehicle = m_cityGrid[iRow][iCol].vehicle;
+							m_cityGrid[iRow][iCol].vehicle = 0;
+
+						} else if(m_cityGrid[iRow-1][iCol].vehicle!=0)
+						{
+							// stop immediately if right next to a vehicle
+							m_cityGrid[iRow][iCol].vehicle->SetVelocity(0);
+
+						} else
+						{
+							// vehicle is free to move, check for frontmost vehicles and evaluate parking probability
+							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow][iCol+1].type==PARKING))
+							{
+								// park the vehicle
+								m_parkedVehicles.push_back(m_cityGrid[iRow][iCol].vehicle);
+
+								m_cityGrid[iRow][iCol].vehicle->SetParked(true);
+								m_cityGrid[iRow][iCol+1].vehicle = m_cityGrid[iRow][iCol].vehicle;
+								m_cityGrid[iRow][iCol].vehicle = 0;
+
+								ns3::Time nowtime = ns3::Simulator::Now();
+								cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow) << "][" << (iCol+1) << "]\n";
+							} else if (m_cityGrid[iRow][iCol].vehicle->GetVelocity()==1)
+							{
+								// move forward 1, evaluate speeding up to 2cells/step
+								if( (m_cityGrid[iRow-2][iCol].vehicle==0) && (m_cityGrid[iRow-3][iCol].vehicle==0) && (m_cityGrid[iRow-2][iCol].type==ROAD))	// road ahead is clear
+									m_cityGrid[iRow][iCol].vehicle->SetVelocity(2);
+								m_cityGrid[iRow-1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
+								m_cityGrid[iRow][iCol].vehicle = 0;
+							} else if(m_cityGrid[iRow][iCol].vehicle->GetVelocity()==2)
+							{
+								// see if we can move to iRow-2, else move to iRow-1 and decrease speed to 1
+								if(m_cityGrid[iRow-2][iCol].vehicle==0 && m_cityGrid[iRow-2][iCol].type==ROAD)	// also makes vehicles slow down before intersections
+								{
+									m_cityGrid[iRow-2][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
+									m_cityGrid[iRow][iCol].vehicle = 0;
+								} else
+								{
+									m_cityGrid[iRow][iCol].vehicle->SetVelocity(1);
+									m_cityGrid[iRow-1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
+									m_cityGrid[iRow][iCol].vehicle = 0;
+								}
+							}
+						}
+ 					}
+				}
+			}	// end of current lane pair
+		}	// end of column iterator
 
 		// TODO evaluate parked vehicles, as they're outside road cells
 		{
