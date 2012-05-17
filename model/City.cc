@@ -204,6 +204,8 @@ namespace ns3
 
 	void City::TranslateVehicles()
 	{
+		ns3::Time nowtime = ns3::Simulator::Now();
+
 		/*
 		 * Rules:
 		 * - Update horizontal first, vertical second
@@ -281,7 +283,7 @@ namespace ns3
 						} else
 						{
 							// vehicle is free to move, check for frontmost vehicles and evaluate parking probability
-							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow-1][iCol].type==PARKING))
+							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow-1][iCol].type==PARKING) && iCol<(m_gridSize-3))	// probability:space:not at edges
 							{
 								// park the vehicle
 								m_parkedVehicles.push_back(m_cityGrid[iRow][iCol].vehicle);
@@ -290,7 +292,6 @@ namespace ns3
 								m_cityGrid[iRow-1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle = 0;
 
-								ns3::Time nowtime = ns3::Simulator::Now();
 								cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow-1) << "][" << (iCol) << "]\n";
 							} else if (m_cityGrid[iRow][iCol].vehicle->GetVelocity()==1)
 							{
@@ -380,7 +381,7 @@ namespace ns3
 						} else
 						{
 							// vehicle is free to move, check for frontmost vehicles and evaluate parking probability
-							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow+1][iCol].type==PARKING))
+							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow+1][iCol].type==PARKING) && iCol>2)	// probability:space:not at edges
 							{
 								// park the vehicle
 								m_parkedVehicles.push_back(m_cityGrid[iRow][iCol].vehicle);
@@ -389,7 +390,6 @@ namespace ns3
 								m_cityGrid[iRow+1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle = 0;
 
-								ns3::Time nowtime = ns3::Simulator::Now();
 								cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow+1) << "][" << (iCol) << "]\n";
 							} else if (m_cityGrid[iRow][iCol].vehicle->GetVelocity()==1)
 							{
@@ -490,7 +490,7 @@ namespace ns3
 						} else
 						{
 							// vehicle is free to move, check for frontmost vehicles and evaluate parking probability
-							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow][iCol-1].type==PARKING))
+							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow][iCol-1].type==PARKING) && iRow>2)	// probability:space:not at edges
 							{
 								// park the vehicle
 								m_parkedVehicles.push_back(m_cityGrid[iRow][iCol].vehicle);
@@ -499,7 +499,6 @@ namespace ns3
 								m_cityGrid[iRow][iCol-1].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle = 0;
 
-								ns3::Time nowtime = ns3::Simulator::Now();
 								cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow) << "][" << (iCol-1) << "]\n";
 							} else if (m_cityGrid[iRow][iCol].vehicle->GetVelocity()==1)
 							{
@@ -589,7 +588,7 @@ namespace ns3
 						} else
 						{
 							// vehicle is free to move, check for frontmost vehicles and evaluate parking probability
-							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow][iCol+1].type==PARKING))
+							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow][iCol+1].type==PARKING) && iRow<(m_gridSize-3))	// probability:space:not at edges
 							{
 								// park the vehicle
 								m_parkedVehicles.push_back(m_cityGrid[iRow][iCol].vehicle);
@@ -598,7 +597,6 @@ namespace ns3
 								m_cityGrid[iRow][iCol+1].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle = 0;
 
-								ns3::Time nowtime = ns3::Simulator::Now();
 								cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow) << "][" << (iCol+1) << "]\n";
 							} else if (m_cityGrid[iRow][iCol].vehicle->GetVelocity()==1)
 							{
@@ -641,24 +639,28 @@ namespace ns3
 								m_cityGrid[iRow][iCol].vehicle->SetParked(false);
 								m_cityGrid[iRow+1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle=0;
+								cout << nowtime.ns3::Time::GetSeconds() << " LEAVE [" << (iRow+1) << "][" << (iCol) << "]\n";
 							}
 							else if(m_cityGrid[iRow-1][iCol].type==ROAD && m_cityGrid[iRow-1][iCol].vehicle==0) // unpark to the north
 							{
 								m_cityGrid[iRow][iCol].vehicle->SetParked(false);
 								m_cityGrid[iRow-1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle=0;
+								cout << nowtime.ns3::Time::GetSeconds() << " LEAVE [" << (iRow-1) << "][" << (iCol) << "]\n";
 							}
 							else if(m_cityGrid[iRow][iCol+1].type==ROAD && m_cityGrid[iRow][iCol+1].vehicle==0) // unpark to the west
 							{
 								m_cityGrid[iRow][iCol].vehicle->SetParked(false);
 								m_cityGrid[iRow][iCol+1].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle=0;
+								cout << nowtime.ns3::Time::GetSeconds() << " LEAVE [" << (iRow) << "][" << (iCol+1) << "]\n";
 							}
 							else if(m_cityGrid[iRow][iCol-1].type==ROAD && m_cityGrid[iRow][iCol-1].vehicle==0) // unpark to the east
 							{
 								m_cityGrid[iRow][iCol].vehicle->SetParked(false);
 								m_cityGrid[iRow][iCol-1].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle=0;
+								cout << nowtime.ns3::Time::GetSeconds() << " LEAVE [" << (iRow) << "][" << (iCol-1) << "]\n";
 							}
 						}
 			}
