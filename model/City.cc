@@ -69,6 +69,7 @@ namespace ns3
 			vector< Cell >::iterator coliterator;
 			for(coliterator=rowiterator->begin(); coliterator!=rowiterator->end(); coliterator++)
 			{
+				coliterator->coverage=0;
 				switch(rowmult)
 				{
 					case 1:
@@ -151,10 +152,24 @@ namespace ns3
 			for(int iCol = 0; iCol<m_gridSize; iCol++)
 			{
 				if(m_cityGrid[iRow][iCol].type==BUILDING) cout << ' ';
-				else if(m_cityGrid[iRow][iCol].vehicle!=0) cout << '1';
+				else if(m_cityGrid[iRow][iCol].vehicle!=0)
+					{ if(m_cityGrid[iRow][iCol].vehicle->IsParked()) cout << 'P'; else cout << '*'; }
 				else if(m_cityGrid[iRow][iCol].type==PARKING) cout << '-';
-				else cout << '0';
+				else cout << ' ';
 			}
+			cout << '\n';
+		}
+	}
+
+	void City::printCityCoverageMap(void)
+	{
+		int rowNum=0;
+		for(int iRow = 0; iRow<m_gridSize; iRow++)
+		{
+			cout << setw(3) << rowNum++ << ' ';
+			for(int iCol = 0; iCol<m_gridSize; iCol++)
+				if(m_cityGrid[iRow][iCol].coverage==0) cout << ' ';
+				else cout << m_cityGrid[iRow][iCol].coverage;
 			cout << '\n';
 		}
 	}
@@ -162,11 +177,12 @@ namespace ns3
 	void City::Step(Ptr<City> City)
 	{
 		ns3::Time nowtime = ns3::Simulator::Now();
-		cout << nowtime.ns3::Time::GetSeconds() << " STEP\n";
+		if(City->GetDebug()) cout << nowtime.ns3::Time::GetSeconds() << " STEP\n";
 
 		City->TranslateVehicles();
 		// DEBUG
 		City->printCityPointVehicles();
+		City->printCityCoverageMap();
 	}
 
 	Ptr<Vehicle> City::CreateVehicle (void)
@@ -176,17 +192,17 @@ namespace ns3
 		return(veh);
 	}
 
-	void City::RandomAddVehicles(int number, double interval)
+	void City::RandomAddVehicles(Ptr<City> City, int number, double interval)
 	{
 		// add vehicles entering in the city randomly
 		// get a random entry point (enum can be equaled to int)
-		int randomPoint = (int)( round(randomNum.GetValue()*7.0) );
+		int randomPoint = (int)( round(City->GetRandomNum().GetValue()*7.0) );
 		CellOrientation entryPoint = (CellOrientation)randomPoint;
-		Ptr<Vehicle> newVeh = CreateVehicle();
-		AddVehicle(newVeh, entryPoint);
+		Ptr<Vehicle> newVeh = City->CreateVehicle();
+		City->AddVehicle(newVeh, entryPoint);
 
 		if(number>0)
-			Simulator::Schedule(Seconds(interval), &ns3::City::RandomAddVehicles, --number, interval);
+			Simulator::Schedule(Seconds(interval), &City::RandomAddVehicles, City, (--number), interval);
 	}
 
 	void City::AddVehicle(Ptr<Vehicle> veh, CellOrientation ort)
@@ -225,14 +241,14 @@ namespace ns3
 			break;
 
 		case TOPLEFT:
-			for(iCol=0; (m_cityGrid[0][iCol].type==ROAD && m_cityGrid[1][iCol].type==ROAD && m_cityGrid[2][iCol].type==ROAD); iCol++);
+			for(iCol=0; !(m_cityGrid[0][iCol].type==ROAD && m_cityGrid[1][iCol].type==ROAD && m_cityGrid[2][iCol].type==ROAD); iCol++);
 			for(iRow=0; m_cityGrid[iRow][iCol].vehicle!=0; iRow++);	// find empty cell on southbound lane
 			m_cityGrid[iRow][iCol].vehicle=veh;
 			m_Vehicles.push_back(veh);
 			break;
 
 		case TOPRIGHT:
-			for(iCol=(m_gridSize-1); (m_cityGrid[0][iCol].type==ROAD && m_cityGrid[1][iCol].type==ROAD && m_cityGrid[2][iCol].type==ROAD); iCol--);
+			for(iCol=(m_gridSize-1); !(m_cityGrid[0][iCol].type==ROAD && m_cityGrid[1][iCol].type==ROAD && m_cityGrid[2][iCol].type==ROAD); iCol--);
 			iCol--; // left lane is the entry point
 			for(iRow=0; m_cityGrid[iRow][iCol].vehicle!=0; iRow++);	// find empty cell on southbound lane
 			m_cityGrid[iRow][iCol].vehicle=veh;
@@ -240,7 +256,7 @@ namespace ns3
 			break;
 
 		case BOTTOMLEFT:
-			for(iCol=0; (m_cityGrid[0][iCol].type==ROAD && m_cityGrid[1][iCol].type==ROAD && m_cityGrid[2][iCol].type==ROAD); iCol++);
+			for(iCol=0; !(m_cityGrid[0][iCol].type==ROAD && m_cityGrid[1][iCol].type==ROAD && m_cityGrid[2][iCol].type==ROAD); iCol++);
 			iCol++; // right lane is the entry point
 			for(iRow=(m_gridSize-1); m_cityGrid[iRow][iCol].vehicle!=0; iRow--);	// find empty cell on southbound lane
 			m_cityGrid[iRow][iCol].vehicle=veh;
@@ -248,7 +264,7 @@ namespace ns3
 			break;
 
 		case BOTTOMRIGHT:
-			for(iCol=(m_gridSize-1); (m_cityGrid[0][iCol].type==ROAD && m_cityGrid[1][iCol].type==ROAD && m_cityGrid[2][iCol].type==ROAD); iCol--);
+			for(iCol=(m_gridSize-1); !(m_cityGrid[0][iCol].type==ROAD && m_cityGrid[1][iCol].type==ROAD && m_cityGrid[2][iCol].type==ROAD); iCol--);
 			for(iRow=(m_gridSize-1); m_cityGrid[iRow][iCol].vehicle!=0; iRow--);	// find empty cell on southbound lane
 			m_cityGrid[iRow][iCol].vehicle=veh;
 			m_Vehicles.push_back(veh);
@@ -351,6 +367,7 @@ namespace ns3
 								m_cityGrid[iRow][iCol].vehicle->SetParked(true);
 								m_cityGrid[iRow-1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle = 0;
+								TagCoverageRSU(iRow-1,iCol);
 
 								if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow-1) << "][" << (iCol) << "]\n";
 							} else if (m_cityGrid[iRow][iCol].vehicle->GetVelocity()==1)
@@ -449,6 +466,7 @@ namespace ns3
 								m_cityGrid[iRow][iCol].vehicle->SetParked(true);
 								m_cityGrid[iRow+1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle = 0;
+								TagCoverageRSU(iRow+1,iCol);
 
 								if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow+1) << "][" << (iCol) << "]\n";
 							} else if (m_cityGrid[iRow][iCol].vehicle->GetVelocity()==1)
@@ -558,6 +576,7 @@ namespace ns3
 								m_cityGrid[iRow][iCol].vehicle->SetParked(true);
 								m_cityGrid[iRow][iCol-1].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle = 0;
+								TagCoverageRSU(iRow,iCol-1);
 
 								if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow) << "][" << (iCol-1) << "]\n";
 							} else if (m_cityGrid[iRow][iCol].vehicle->GetVelocity()==1)
@@ -656,6 +675,7 @@ namespace ns3
 								m_cityGrid[iRow][iCol].vehicle->SetParked(true);
 								m_cityGrid[iRow][iCol+1].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle = 0;
+								TagCoverageRSU(iRow,iCol+1);
 
 								if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow) << "][" << (iCol+1) << "]\n";
 							} else if (m_cityGrid[iRow][iCol].vehicle->GetVelocity()==1)
@@ -686,6 +706,7 @@ namespace ns3
 		}	// end of column iterator
 
 		// evaluate parked vehicles, as they're outside road cells
+		// TODO need to remove items from m_parkedVehicles
 		for(iRow=0; iRow<m_gridSize; iRow++)
 			for(iCol=0; iCol<m_gridSize; iCol++)
 			{
@@ -699,6 +720,7 @@ namespace ns3
 								m_cityGrid[iRow][iCol].vehicle->SetParked(false);
 								m_cityGrid[iRow+1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle=0;
+								UnTagCoverageRSU(iRow, iCol);
 								if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " LEAVE [" << (iRow+1) << "][" << (iCol) << "]\n";
 							}
 							else if(m_cityGrid[iRow-1][iCol].type==ROAD && m_cityGrid[iRow-1][iCol].vehicle==0) // unpark to the north
@@ -706,6 +728,7 @@ namespace ns3
 								m_cityGrid[iRow][iCol].vehicle->SetParked(false);
 								m_cityGrid[iRow-1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle=0;
+								UnTagCoverageRSU(iRow, iCol);
 								if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " LEAVE [" << (iRow-1) << "][" << (iCol) << "]\n";
 							}
 							else if(m_cityGrid[iRow][iCol+1].type==ROAD && m_cityGrid[iRow][iCol+1].vehicle==0) // unpark to the west
@@ -713,6 +736,7 @@ namespace ns3
 								m_cityGrid[iRow][iCol].vehicle->SetParked(false);
 								m_cityGrid[iRow][iCol+1].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle=0;
+								UnTagCoverageRSU(iRow, iCol);
 								if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " LEAVE [" << (iRow) << "][" << (iCol+1) << "]\n";
 							}
 							else if(m_cityGrid[iRow][iCol-1].type==ROAD && m_cityGrid[iRow][iCol-1].vehicle==0) // unpark to the east
@@ -720,6 +744,7 @@ namespace ns3
 								m_cityGrid[iRow][iCol].vehicle->SetParked(false);
 								m_cityGrid[iRow][iCol-1].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle=0;
+								UnTagCoverageRSU(iRow, iCol);
 								if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " LEAVE [" << (iRow) << "][" << (iCol-1) << "]\n";
 							}
 						}
@@ -727,6 +752,126 @@ namespace ns3
 
 		Simulator::Schedule(Seconds(m_dt), &City::Step, Ptr<City>(this));
 	}
+
+	void City::TagCoverageRSU(int x, int y)
+	{
+		// by using the pattern in range50cell[25], tag a block of 50x50 cells (125x125m) as covered by an RSU
+		// (x,y) marks the position of the RSU, and it belongs to the upper left quadrant
+		int iRow, iCol;
+
+		// upper left quadrant
+		iRow=0;
+		while(iRow<25 && (x-iRow)>=0)
+		{
+			iCol=0;
+			while(iCol<range50cell[24-iRow] && (y-iCol)>=0)
+			{
+				m_cityGrid[x-iRow][y-iCol].coverage++;
+				iCol++;
+			}
+			iRow++;
+		}
+
+		// lower left quadrant
+		iRow=0;
+		while(iRow<25 && (x+iRow+1)<100)
+		{
+			iCol=0;
+			while(iCol<range50cell[24-iRow] && (y-iCol)>=0)
+			{
+				m_cityGrid[x+iRow+1][y-iCol].coverage++;
+				iCol++;
+			}
+			iRow++;
+		}
+
+		// upper right quadrant
+		iRow=0;
+		while(iRow<25 && (x-iRow)>=0)
+		{
+			iCol=0;
+			while(iCol<range50cell[24-iRow] && (y+iCol+1)<100)
+			{
+				m_cityGrid[x-iRow][y+iCol+1].coverage++;
+				iCol++;
+			}
+			iRow++;
+		}
+
+		// lower right quadrant
+		iRow=0;
+		while(iRow<25 && (x+iRow+1)<100)
+		{
+			iCol=0;
+			while(iCol<range50cell[24-iRow] && (y+iCol+1)<100)
+			{
+				m_cityGrid[x+iRow+1][y+iCol+1].coverage++;
+				iCol++;
+			}
+			iRow++;
+		}
+	}
+
+	void City::UnTagCoverageRSU(int x, int y)
+	{
+		// by using the pattern in range50cell[25], untag a block of 50x50 cells (125x125m) as covered by an RSU
+		// (x,y) marks the position of the RSU, and it belongs to the upper left quadrant
+		int iRow, iCol;
+
+		// upper left quadrant
+		iRow=0;
+		while(iRow<25 && (x-iRow)>=0)
+		{
+			iCol=0;
+			while(iCol<range50cell[24-iRow] && (y-iCol)>=0)
+			{
+				m_cityGrid[x-iRow][y-iCol].coverage--;
+				iCol++;
+			}
+			iRow++;
+		}
+
+		// lower left quadrant
+		iRow=0;
+		while(iRow<25 && (x+iRow+1)<100)
+		{
+			iCol=0;
+			while(iCol<range50cell[24-iRow] && (y-iCol)>=0)
+			{
+				m_cityGrid[x+iRow+1][y-iCol].coverage--;
+				iCol++;
+			}
+			iRow++;
+		}
+
+		// upper right quadrant
+		iRow=0;
+		while(iRow<25 && (x-iRow)>=0)
+		{
+			iCol=0;
+			while(iCol<range50cell[24-iRow] && (y+iCol+1)<100)
+			{
+				m_cityGrid[x-iRow][y+iCol+1].coverage--;
+				iCol++;
+			}
+			iRow++;
+		}
+
+		// lower right quadrant
+		iRow=0;
+		while(iRow<25 && (x+iRow+1)<100)
+		{
+			iCol=0;
+			while(iCol<range50cell[24-iRow] && (y+iCol+1)<100)
+			{
+				m_cityGrid[x+iRow+1][y+iCol+1].coverage--;
+				iCol++;
+			}
+			iRow++;
+		}
+	}
+
+	/* Setters and getters */
 
 	double City::GetDeltaT()
 		{ return(m_dt); }
@@ -742,6 +887,13 @@ namespace ns3
 
 	void City::SetDebug(bool value)
 		{ m_debug=value; }
+
+	bool City::GetDebug(void)
+		{ return(m_debug); }
+
+
+	UniformVariable City::GetRandomNum(void)
+		{ return(randomNum); }
 
 	/* Callbacks */
 

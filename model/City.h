@@ -39,6 +39,7 @@ namespace ns3
 {
 	enum CellType {ROAD, INTERSECTION, BUILDING, PARKING};
 	enum CellOrientation {TOPLEFT, TOPRIGHT, RIGHTTOP, RIGHTBOTTOM, BOTTOMRIGHT, BOTTOMLEFT, LEFTBOTTOM, LEFTTOP, RANDOM};
+	const short range50cell[25] = {3,7,10,12,14,15,16,17,18,19,20,21,21,22,22,23,23,23,24,24,24,24,25,25,25};
 
 	// Setup a grid-like system for cars to travel in
 	class City: public ns3::Object
@@ -51,6 +52,7 @@ namespace ns3
 			{
 				Ptr<Vehicle> vehicle;
 				CellType type;
+				int coverage;	// number of RSUs covering this cell
 			} Cell;
 
 			int m_gridSize;						// side (in cells) of cell grid
@@ -70,6 +72,8 @@ namespace ns3
 
 			void InitCity();
 			void TranslateVehicles();
+			void TagCoverageRSU(int x, int y);
+			void UnTagCoverageRSU(int x, int y);
 
 			Callback<bool, Ptr<City> ,Ptr<Vehicle> , double> m_controlVehicle;
 			Callback<bool, Ptr<City> > m_initVehicles;
@@ -84,16 +88,19 @@ namespace ns3
 			void Stop();
 
 			double GetDeltaT(void);
+			UniformVariable GetRandomNum(void);
 			void SetDeltaT(double value);
 			void SetParkProb(double value);
 			void SetGridSize(int value);
 			void SetDebug(bool value);
+			bool GetDebug(void);
 
 			Ptr<Vehicle> CreateVehicle (void);
 			void AddVehicle(Ptr<Vehicle> veh, CellOrientation ort);
-			void RandomAddVehicles(int number, double interval);
+			static void RandomAddVehicles(Ptr<City> City, int number, double interval);
 			void printCityStruct(void);
 			void printCityPointVehicles(void);
+			void printCityCoverageMap(void);
 
 			VehicleReceiveCallback GetReceiveDataCallback();
 			void SetReceiveDataCallback(VehicleReceiveCallback receiveData);
