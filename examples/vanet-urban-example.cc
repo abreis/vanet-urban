@@ -77,6 +77,7 @@ int main (int argc, char *argv[])
 	double deltaT=1;					// simulation step, max resolution is 1 step per deltaT
 	int gridSize=400;					// grid size^2, default 400x400 (5m cells, 2x2km)
 	double parkProb=0.001;
+	bool debug=false;
 
 	// Process command-line args
 	CommandLine cmd;
@@ -84,12 +85,14 @@ int main (int argc, char *argv[])
 	cmd.AddValue ("rn", "run number", runNumber);
 	cmd.AddValue ("gridsize", "sqrt(cells)", gridSize);
 	cmd.AddValue ("parkprob", "parking probability (per vehicle per second)", parkProb);
+	cmd.AddValue ("debug", "enable debug output", debug);
 	cmd.Parse(argc, argv);
 
 	// Setup a City
 	g_City->SetDeltaT(deltaT);
 	g_City->SetGridSize(gridSize);
 	g_City->SetParkProb(parkProb);
+	g_City->SetDebug(debug);
 
 	// Bind the City/Vehicle events to the event handlers
 	g_City->SetInitVehiclesCallback(MakeCallback(&InitVehicles));

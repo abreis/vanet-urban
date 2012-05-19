@@ -45,6 +45,7 @@ namespace ns3
 		m_probPark = 0.001;
 		m_probTurnLeft = 0.25;
 		m_probTurnRight = 0.25;
+		m_debug=false;
 	}
 
 	City::~City()
@@ -292,7 +293,7 @@ namespace ns3
 								m_cityGrid[iRow-1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle = 0;
 
-								cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow-1) << "][" << (iCol) << "]\n";
+								if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow-1) << "][" << (iCol) << "]\n";
 							} else if (m_cityGrid[iRow][iCol].vehicle->GetVelocity()==1)
 							{
 								// move forward 1, evaluate speeding up to 2cells/step
@@ -390,7 +391,7 @@ namespace ns3
 								m_cityGrid[iRow+1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle = 0;
 
-								cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow+1) << "][" << (iCol) << "]\n";
+								if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow+1) << "][" << (iCol) << "]\n";
 							} else if (m_cityGrid[iRow][iCol].vehicle->GetVelocity()==1)
 							{
 								// move forward 1, evaluate speeding up to 2cells/step
@@ -499,7 +500,7 @@ namespace ns3
 								m_cityGrid[iRow][iCol-1].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle = 0;
 
-								cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow) << "][" << (iCol-1) << "]\n";
+								if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow) << "][" << (iCol-1) << "]\n";
 							} else if (m_cityGrid[iRow][iCol].vehicle->GetVelocity()==1)
 							{
 								// move forward 1, evaluate speeding up to 2cells/step
@@ -597,7 +598,7 @@ namespace ns3
 								m_cityGrid[iRow][iCol+1].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle = 0;
 
-								cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow) << "][" << (iCol+1) << "]\n";
+								if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow) << "][" << (iCol+1) << "]\n";
 							} else if (m_cityGrid[iRow][iCol].vehicle->GetVelocity()==1)
 							{
 								// move forward 1, evaluate speeding up to 2cells/step
@@ -639,28 +640,28 @@ namespace ns3
 								m_cityGrid[iRow][iCol].vehicle->SetParked(false);
 								m_cityGrid[iRow+1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle=0;
-								cout << nowtime.ns3::Time::GetSeconds() << " LEAVE [" << (iRow+1) << "][" << (iCol) << "]\n";
+								if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " LEAVE [" << (iRow+1) << "][" << (iCol) << "]\n";
 							}
 							else if(m_cityGrid[iRow-1][iCol].type==ROAD && m_cityGrid[iRow-1][iCol].vehicle==0) // unpark to the north
 							{
 								m_cityGrid[iRow][iCol].vehicle->SetParked(false);
 								m_cityGrid[iRow-1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle=0;
-								cout << nowtime.ns3::Time::GetSeconds() << " LEAVE [" << (iRow-1) << "][" << (iCol) << "]\n";
+								if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " LEAVE [" << (iRow-1) << "][" << (iCol) << "]\n";
 							}
 							else if(m_cityGrid[iRow][iCol+1].type==ROAD && m_cityGrid[iRow][iCol+1].vehicle==0) // unpark to the west
 							{
 								m_cityGrid[iRow][iCol].vehicle->SetParked(false);
 								m_cityGrid[iRow][iCol+1].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle=0;
-								cout << nowtime.ns3::Time::GetSeconds() << " LEAVE [" << (iRow) << "][" << (iCol+1) << "]\n";
+								if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " LEAVE [" << (iRow) << "][" << (iCol+1) << "]\n";
 							}
 							else if(m_cityGrid[iRow][iCol-1].type==ROAD && m_cityGrid[iRow][iCol-1].vehicle==0) // unpark to the east
 							{
 								m_cityGrid[iRow][iCol].vehicle->SetParked(false);
 								m_cityGrid[iRow][iCol-1].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle=0;
-								cout << nowtime.ns3::Time::GetSeconds() << " LEAVE [" << (iRow) << "][" << (iCol-1) << "]\n";
+								if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " LEAVE [" << (iRow) << "][" << (iCol-1) << "]\n";
 							}
 						}
 			}
@@ -679,6 +680,9 @@ namespace ns3
 
 	void City::SetGridSize(int value)
 		{ m_gridSize=value; }
+
+	void City::SetDebug(bool value)
+		{ m_debug=value; }
 
 	/* Callbacks */
 

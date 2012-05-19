@@ -56,6 +56,7 @@ namespace ns3
 			int m_gridSize;						// side (in cells) of cell grid
 			double m_dt;						// step interval
 			double m_range;						// vehicle radio range
+			bool m_debug;						// debug message flag
 
 			UniformVariable randomNum;			// generates uniform numbers between 0.0 and 1.0
 			double m_probPark;					// probability of parking
@@ -86,6 +87,7 @@ namespace ns3
 			void SetDeltaT(double value);
 			void SetParkProb(double value);
 			void SetGridSize(int value);
+			void SetDebug(bool value);
 
 			Ptr<Vehicle> CreateVehicle (void);
 			void AddVehicle(Ptr<Vehicle> veh, CellOrientation ort);
