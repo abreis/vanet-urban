@@ -176,31 +176,90 @@ namespace ns3
 		return(veh);
 	}
 
+	void City::RandomAddVehicles(int number, double interval)
+	{
+		// add vehicles entering in the city randomly
+		// get a random entry point (enum can be equaled to int)
+		int randomPoint = (int)( round(randomNum.GetValue()*7.0) );
+		CellOrientation entryPoint = (CellOrientation)randomPoint;
+		Ptr<Vehicle> newVeh = CreateVehicle();
+		AddVehicle(newVeh, entryPoint);
+
+		if(number>0)
+			Simulator::Schedule(Seconds(interval), &ns3::City::RandomAddVehicles, --number, interval);
+	}
 
 	void City::AddVehicle(Ptr<Vehicle> veh, CellOrientation ort)
 	{
 		int iRow=0, iCol=0;
 		switch(ort)
 		{
-		case LEFTTOP:	// westbound
-			for(iRow = 0; !(m_cityGrid[iRow][0].type==ROAD && m_cityGrid[iRow][1].type==ROAD && m_cityGrid[iRow][2].type==ROAD); iRow++)
-			for(iCol = 0; m_cityGrid[iRow+1][iCol].vehicle!=0; iCol++);	// find empty cell on westbound lane
-			m_cityGrid[iRow+1][iCol].vehicle=veh;
-			m_Vehicles.push_back(veh);
-			break;
-
-		case RIGHTTOP:	// eastbound
-			for(iRow = 0; !(m_cityGrid[iRow][0].type==ROAD && m_cityGrid[iRow][1].type==ROAD && m_cityGrid[iRow][2].type==ROAD); iRow++)
-			for(iCol = (m_gridSize-1); m_cityGrid[iRow][iCol].vehicle!=0; iCol--);	// find empty cell on eastbound lane
+		case LEFTTOP:	// eastbound
+			for(iRow = 0; !(m_cityGrid[iRow][0].type==ROAD && m_cityGrid[iRow][1].type==ROAD && m_cityGrid[iRow][2].type==ROAD); iRow++);
+			iRow++;	// bottom lane is the entry point
+			for(iCol = 0; m_cityGrid[iRow][iCol].vehicle!=0; iCol++);	// find empty cell on eastbound lane
 			m_cityGrid[iRow][iCol].vehicle=veh;
 			m_Vehicles.push_back(veh);
 			break;
+
+		case RIGHTTOP:	// westbound
+			for(iRow = 0; !(m_cityGrid[iRow][0].type==ROAD && m_cityGrid[iRow][1].type==ROAD && m_cityGrid[iRow][2].type==ROAD); iRow++);
+			for(iCol = (m_gridSize-1); m_cityGrid[iRow][iCol].vehicle!=0; iCol--);	// find empty cell on westbound lane
+			m_cityGrid[iRow][iCol].vehicle=veh;
+			m_Vehicles.push_back(veh);
+			break;
+
+		case LEFTBOTTOM:	// eastbound
+			for(iRow = (m_gridSize-1); !(m_cityGrid[iRow][0].type==ROAD && m_cityGrid[iRow][1].type==ROAD && m_cityGrid[iRow][2].type==ROAD); iRow--);
+			for(iCol = 0; m_cityGrid[iRow][iCol].vehicle!=0; iCol++);	// find empty cell on eastbound lane
+			m_cityGrid[iRow][iCol].vehicle=veh;
+			m_Vehicles.push_back(veh);
+			break;
+
+		case RIGHTBOTTOM:	// westbound
+			for(iRow = (m_gridSize-1); !(m_cityGrid[iRow][0].type==ROAD && m_cityGrid[iRow][1].type==ROAD && m_cityGrid[iRow][2].type==ROAD); iRow--);
+			iRow--; // top lane is the entry point
+			for(iCol = (m_gridSize-1); m_cityGrid[iRow][iCol].vehicle!=0; iCol--);	// find empty cell on westbound lane
+			m_cityGrid[iRow][iCol].vehicle=veh;
+			m_Vehicles.push_back(veh);
+			break;
+
+		case TOPLEFT:
+			for(iCol=0; (m_cityGrid[0][iCol].type==ROAD && m_cityGrid[1][iCol].type==ROAD && m_cityGrid[2][iCol].type==ROAD); iCol++);
+			for(iRow=0; m_cityGrid[iRow][iCol].vehicle!=0; iRow++);	// find empty cell on southbound lane
+			m_cityGrid[iRow][iCol].vehicle=veh;
+			m_Vehicles.push_back(veh);
+			break;
+
+		case TOPRIGHT:
+			for(iCol=(m_gridSize-1); (m_cityGrid[0][iCol].type==ROAD && m_cityGrid[1][iCol].type==ROAD && m_cityGrid[2][iCol].type==ROAD); iCol--);
+			iCol--; // left lane is the entry point
+			for(iRow=0; m_cityGrid[iRow][iCol].vehicle!=0; iRow++);	// find empty cell on southbound lane
+			m_cityGrid[iRow][iCol].vehicle=veh;
+			m_Vehicles.push_back(veh);
+			break;
+
+		case BOTTOMLEFT:
+			for(iCol=0; (m_cityGrid[0][iCol].type==ROAD && m_cityGrid[1][iCol].type==ROAD && m_cityGrid[2][iCol].type==ROAD); iCol++);
+			iCol++; // right lane is the entry point
+			for(iRow=(m_gridSize-1); m_cityGrid[iRow][iCol].vehicle!=0; iRow--);	// find empty cell on southbound lane
+			m_cityGrid[iRow][iCol].vehicle=veh;
+			m_Vehicles.push_back(veh);
+			break;
+
+		case BOTTOMRIGHT:
+			for(iCol=(m_gridSize-1); (m_cityGrid[0][iCol].type==ROAD && m_cityGrid[1][iCol].type==ROAD && m_cityGrid[2][iCol].type==ROAD); iCol--);
+			for(iRow=(m_gridSize-1); m_cityGrid[iRow][iCol].vehicle!=0; iRow--);	// find empty cell on southbound lane
+			m_cityGrid[iRow][iCol].vehicle=veh;
+			m_Vehicles.push_back(veh);
+			break;
+
 		default:
 			break;
 		}
 
 		ns3::Time nowtime = ns3::Simulator::Now();
-		cout << nowtime.ns3::Time::GetSeconds() << " NEW   [" << iRow << "][" << iCol << "]\n";
+		if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " NEW   [" << iRow << "][" << iCol << "]\n";
 	}
 
 	void City::TranslateVehicles()
@@ -220,7 +279,7 @@ namespace ns3
 			if(m_cityGrid[iRow][0].type==ROAD && m_cityGrid[iRow][1].type==ROAD && m_cityGrid[iRow][2].type==ROAD)
 			{
 				// we're at a horizontal road
-				// first horizontal lane from top runs eastbound, so we're at the start
+				// first horizontal lane from top runs westbound, so we're at the start
 
 				// run through each vehicle, frontmost first
 				for(iCol = 0; iCol<m_gridSize; iCol++)
@@ -229,7 +288,7 @@ namespace ns3
 							!(m_cityGrid[iRow][iCol].type==INTERSECTION && m_cityGrid[iRow][iCol+1].type==INTERSECTION)
 							) // there's a vehicle here and it belongs to this lane already
 					{
-						// movement rules for eastbound vehicle
+						// movement rules for westbound vehicle
 						if(m_cityGrid[iRow][iCol].type==INTERSECTION)
 						{
 							// if current cell is marked as INTERSECTION, evaluate turning probability
@@ -319,7 +378,7 @@ namespace ns3
  					}
 				}
 
-				// now increase iRow and process westbound lane (starts on m_gridSize, vehicles in front have larger index)
+				// now increase iRow and process eastbound lane (starts on m_gridSize, vehicles in front have larger index)
 				iRow++;
 				for(iCol = (m_gridSize-1); iCol>=0; iCol--)
 				{

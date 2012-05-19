@@ -38,7 +38,7 @@
 namespace ns3
 {
 	enum CellType {ROAD, INTERSECTION, BUILDING, PARKING};
-	enum CellOrientation {RANDOM, TOPLEFT, TOPRIGHT, RIGHTTOP, RIGHTBOTTOM, BOTTOMRIGHT, BOTTOMLEFT, LEFTBOTTOM, LEFTTOP};
+	enum CellOrientation {TOPLEFT, TOPRIGHT, RIGHTTOP, RIGHTBOTTOM, BOTTOMRIGHT, BOTTOMLEFT, LEFTBOTTOM, LEFTTOP, RANDOM};
 
 	// Setup a grid-like system for cars to travel in
 	class City: public ns3::Object
@@ -91,6 +91,7 @@ namespace ns3
 
 			Ptr<Vehicle> CreateVehicle (void);
 			void AddVehicle(Ptr<Vehicle> veh, CellOrientation ort);
+			void RandomAddVehicles(int number, double interval);
 			void printCityStruct(void);
 			void printCityPointVehicles(void);
 
