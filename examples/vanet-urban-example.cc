@@ -46,7 +46,7 @@ static void Stop(Ptr<City> City) { City->Stop(); }
 static bool InitVehicles(Ptr<City> City)
 {
 	// print city map
-	g_City->printCityStruct();
+	g_City->PrintCityStruct();
 
 //	// initialize vehicles in this routine
 //	Ptr<Vehicle> testDummy01 = g_City->CreateVehicle();
@@ -54,8 +54,6 @@ static bool InitVehicles(Ptr<City> City)
 ////	vHeader.SetID(1337);
 ////	testDummy01->AddPacket(vHeader);
 //	Simulator::Schedule(Seconds(0.5), &ns3::City::AddVehicle, g_City, testDummy01, RIGHTTOP);
-
-	g_City->RandomAddVehicles(g_City, 80, 1.0);
 
 	return(true);
 }
@@ -74,12 +72,14 @@ static void ReceiveData(Ptr<Vehicle> vehicle, VanetHeader packet)
 int main (int argc, char *argv[])
 { 
 	// Default values
-	float simTime=1000.0;				// simulation time
+	float simTime=3600.0;				// simulation time
 	int runNumber=1;					// run number
 	double deltaT=1;					// simulation step, max resolution is 1 step per deltaT
 	int gridSize=400;					// grid size^2, default 400x400 (5m cells, 2x2km)
 	double parkProb=0.001;
 	bool debug=false;
+	int nVehicles=20;					// number of vehicles to introduce
+	float interval=1.0;					// delay in seconds between each new vehicle
 
 	// Process command-line args
 	CommandLine cmd;
@@ -88,6 +88,8 @@ int main (int argc, char *argv[])
 	cmd.AddValue ("gridsize", "sqrt(cells)", gridSize);
 	cmd.AddValue ("parkprob", "parking probability (per vehicle per second)", parkProb);
 	cmd.AddValue ("debug", "enable debug output", debug);
+	cmd.AddValue ("nvehicles", "vehicles to insert", nVehicles);
+	cmd.AddValue ("interval", "delay between each new vehicle", interval);
 	cmd.Parse(argc, argv);
 
 	// Setup a City
@@ -95,6 +97,9 @@ int main (int argc, char *argv[])
 	g_City->SetGridSize(gridSize);
 	g_City->SetParkProb(parkProb);
 	g_City->SetDebug(debug);
+	g_City->SetNumberOfVehicles(nVehicles);
+	g_City->SetInterval(interval);
+
 
 	// Bind the City/Vehicle events to the event handlers
 	g_City->SetInitVehiclesCallback(MakeCallback(&InitVehicles));

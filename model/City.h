@@ -41,6 +41,7 @@ namespace ns3
 	enum CellOrientation {TOPLEFT, TOPRIGHT, RIGHTTOP, RIGHTBOTTOM, BOTTOMRIGHT, BOTTOMLEFT, LEFTBOTTOM, LEFTTOP, RANDOM};
 
 	// total number of cells in a 25-cell radius = 1908
+	#define TOTALCELLS 1908
 	const short range50cell[25] = {3,7,10,12,14,15,16,17,18,19,20,21,21,22,22,23,23,23,24,24,24,24,25,25,25};
 
 	// Setup a grid-like system for cars to travel in
@@ -61,6 +62,8 @@ namespace ns3
 			double m_dt;						// step interval
 			double m_range;						// vehicle radio range
 			bool m_debug;						// debug message flag
+			int m_nvehicles;
+			float m_interval;
 
 			UniformVariable randomNum;			// generates uniform numbers between 0.0 and 1.0
 			double m_probPark;					// probability of parking
@@ -101,13 +104,16 @@ namespace ns3
 			void SetGridSize(int value);
 			void SetDebug(bool value);
 			bool GetDebug(void);
+			void SetNumberOfVehicles(int value);
+			void SetInterval(float value);
 
 			Ptr<Vehicle> CreateVehicle (void);
 			void AddVehicle(Ptr<Vehicle> veh, CellOrientation ort);
 			static void RandomAddVehicles(Ptr<City> City, int number, double interval);
-			void printCityStruct(void);
-			void printCityPointVehicles(void);
-			void printCityCoverageMap(void);
+			void PrintCityStruct(void);
+			void PrintCityPointVehicles(void);
+			void PrintCityCoverageMap(void);
+			void PrintStatistics(void);
 
 			// evaluation algorithms
 			int CountCoveredCells(void);	// number of cells under an RSU

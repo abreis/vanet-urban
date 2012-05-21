@@ -121,9 +121,11 @@ namespace ns3
 			m_initVehicles(Ptr<City>(this));
 		}
 
+		RandomAddVehicles(this, m_nvehicles, m_interval);	// get vehicle insertion going
+
 	}
 
-	void City::printCityStruct(void)
+	void City::PrintCityStruct(void)
 	{
 		int rowNum=0;
 		for(int iRow = 0; iRow<m_gridSize; iRow++)
@@ -143,7 +145,7 @@ namespace ns3
 		}
 	}
 
-	void City::printCityPointVehicles(void)
+	void City::PrintCityPointVehicles(void)
 	{
 		int rowNum=0;
 		for(int iRow = 0; iRow<m_gridSize; iRow++)
@@ -161,7 +163,7 @@ namespace ns3
 		}
 	}
 
-	void City::printCityCoverageMap(void)
+	void City::PrintCityCoverageMap(void)
 	{
 		int rowNum=0;
 		for(int iRow = 0; iRow<m_gridSize; iRow++)
@@ -181,8 +183,9 @@ namespace ns3
 
 		City->TranslateVehicles();
 		// DEBUG
-		City->printCityPointVehicles();
-		City->printCityCoverageMap();
+//		City->PrintCityPointVehicles();
+//		City->PrintCityCoverageMap();
+		City->PrintStatistics();
 	}
 
 	Ptr<Vehicle> City::CreateVehicle (void)
@@ -362,7 +365,7 @@ namespace ns3
 							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow-1][iCol].type==PARKING) && iCol<(m_gridSize-3))	// probability:space:not at edges
 							{
 								// park the vehicle
-								m_parkedVehicles.push_back(m_cityGrid[iRow][iCol].vehicle);
+//								m_parkedVehicles.push_back(m_cityGrid[iRow][iCol].vehicle);
 
 								m_cityGrid[iRow][iCol].vehicle->SetParked(true);
 								m_cityGrid[iRow-1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
@@ -461,7 +464,7 @@ namespace ns3
 							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow+1][iCol].type==PARKING) && iCol>2)	// probability:space:not at edges
 							{
 								// park the vehicle
-								m_parkedVehicles.push_back(m_cityGrid[iRow][iCol].vehicle);
+//								m_parkedVehicles.push_back(m_cityGrid[iRow][iCol].vehicle);
 
 								m_cityGrid[iRow][iCol].vehicle->SetParked(true);
 								m_cityGrid[iRow+1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
@@ -571,7 +574,7 @@ namespace ns3
 							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow][iCol-1].type==PARKING) && iRow>2)	// probability:space:not at edges
 							{
 								// park the vehicle
-								m_parkedVehicles.push_back(m_cityGrid[iRow][iCol].vehicle);
+//								m_parkedVehicles.push_back(m_cityGrid[iRow][iCol].vehicle);
 
 								m_cityGrid[iRow][iCol].vehicle->SetParked(true);
 								m_cityGrid[iRow][iCol-1].vehicle = m_cityGrid[iRow][iCol].vehicle;
@@ -670,7 +673,7 @@ namespace ns3
 							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow][iCol+1].type==PARKING) && iRow<(m_gridSize-3))	// probability:space:not at edges
 							{
 								// park the vehicle
-								m_parkedVehicles.push_back(m_cityGrid[iRow][iCol].vehicle);
+//								m_parkedVehicles.push_back(m_cityGrid[iRow][iCol].vehicle);
 
 								m_cityGrid[iRow][iCol].vehicle->SetParked(true);
 								m_cityGrid[iRow][iCol+1].vehicle = m_cityGrid[iRow][iCol].vehicle;
@@ -937,7 +940,7 @@ namespace ns3
 		int covered = CountUncoveredCells(x,y);
 		float coverage = (float)covered/(1908.0);
 		// TODO test and remove
-		cout << "DEBUG" << coverage << endl;
+		cout << "DEBUG coverage percent algorithm" << coverage << endl;
 		if(coverage<percent)
 			return(true);
 		else return(false);
@@ -1022,7 +1025,6 @@ namespace ns3
 
 		if(distance<(25*percent))	// if there is an RSU at less than percent% of the 25 cell radius, don't be an RSU
 			return(false); else return(true);
-
 	}
 
 	/* evaluation algorithms */
@@ -1054,6 +1056,26 @@ namespace ns3
 		return(count);
 	}
 
+	void City::PrintStatistics(void)
+	{
+		ns3::Time nowtime = ns3::Simulator::Now();
+		if(nowtime.ns3::Time::GetSeconds() > m_nvehicles*m_interval)	// ensure city is filled before taking statistics
+		{
+			cout << nowtime.ns3::Time::GetSeconds() << " STAT "
+				<< "COVERED " << CountCoveredCells()
+				<< '\n';
+
+			cout << nowtime.ns3::Time::GetSeconds() << " STAT "
+				<< "OVERCOVERED " << CountOvercoveredCells()
+				<< '\n';
+
+			cout << nowtime.ns3::Time::GetSeconds() << " STAT "
+				<< "OVERCOVERAGE " << setw(3) << (float)CountOvercoverage()/(float)TOTALCELLS
+				<< '\n';
+
+		}
+	}
+
 	/* Setters and getters */
 
 	double City::GetDeltaT()
@@ -1074,6 +1096,11 @@ namespace ns3
 	bool City::GetDebug(void)
 		{ return(m_debug); }
 
+	void City::SetNumberOfVehicles(int value)
+		{ m_nvehicles=value; }
+
+	void City::SetInterval(float value)
+		{ m_interval=value; }
 
 	UniformVariable City::GetRandomNum(void)
 		{ return(randomNum); }
