@@ -26,6 +26,7 @@
 #include <iostream>
 #include <iomanip>
 #include <math.h>
+#include <assert.h>
 #include "ns3/callback.h"
 #include "ns3/ptr.h"
 #include "ns3/object.h"
@@ -34,11 +35,12 @@
 #include "Vehicle.h"
 #include "VanetHeader.h"
 
-
 namespace ns3
 {
 	enum CellType {ROAD, INTERSECTION, BUILDING, PARKING};
 	enum CellOrientation {TOPLEFT, TOPRIGHT, RIGHTTOP, RIGHTBOTTOM, BOTTOMRIGHT, BOTTOMLEFT, LEFTBOTTOM, LEFTTOP, RANDOM};
+
+	// total number of cells in a 25-cell radius = 1908
 	const short range50cell[25] = {3,7,10,12,14,15,16,17,18,19,20,21,21,22,22,23,23,23,24,24,24,24,25,25,25};
 
 	// Setup a grid-like system for cars to travel in
@@ -74,6 +76,11 @@ namespace ns3
 			void TranslateVehicles();
 			void TagCoverageRSU(int x, int y);
 			void UnTagCoverageRSU(int x, int y);
+			int CountUncoveredCells(int x, int y);
+
+			// election algorithms
+			bool ElectBasedOnPercentageNewCellsCovered(int x, int y, float percent);
+			bool ElectBasedOnDistanceToNearestRSU(int x, int y, float percent);
 
 			Callback<bool, Ptr<City> ,Ptr<Vehicle> , double> m_controlVehicle;
 			Callback<bool, Ptr<City> > m_initVehicles;
@@ -101,6 +108,11 @@ namespace ns3
 			void printCityStruct(void);
 			void printCityPointVehicles(void);
 			void printCityCoverageMap(void);
+
+			// evaluation algorithms
+			int CountCoveredCells(void);	// number of cells under an RSU
+			int CountOvercoveredCells(void);	// number of cells under more than one RSU
+			int CountOvercoverage(void);	// Overcoverage amount (how much overcoverage in all cells)
 
 			VehicleReceiveCallback GetReceiveDataCallback();
 			void SetReceiveDataCallback(VehicleReceiveCallback receiveData);

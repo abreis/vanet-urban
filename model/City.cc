@@ -871,6 +871,189 @@ namespace ns3
 		}
 	}
 
+	int City::CountUncoveredCells(int x, int y)
+	{
+		int count=0;
+		int iRow, iCol;
+
+		// upper left quadrant
+		iRow=0;
+		while(iRow<25 && (x-iRow)>=0)
+		{
+			iCol=0;
+			while(iCol<range50cell[24-iRow] && (y-iCol)>=0)
+			{
+				if(m_cityGrid[x-iRow][y-iCol].coverage==0) count++;
+				iCol++;
+			}
+			iRow++;
+		}
+
+		// lower left quadrant
+		iRow=0;
+		while(iRow<25 && (x+iRow+1)<100)
+		{
+			iCol=0;
+			while(iCol<range50cell[24-iRow] && (y-iCol)>=0)
+			{
+				if(m_cityGrid[x+iRow+1][y-iCol].coverage==0) count++;
+				iCol++;
+			}
+			iRow++;
+		}
+
+		// upper right quadrant
+		iRow=0;
+		while(iRow<25 && (x-iRow)>=0)
+		{
+			iCol=0;
+			while(iCol<range50cell[24-iRow] && (y+iCol+1)<100)
+			{
+				if(m_cityGrid[x-iRow][y+iCol+1].coverage==0) count++;
+				iCol++;
+			}
+			iRow++;
+		}
+
+		// lower right quadrant
+		iRow=0;
+		while(iRow<25 && (x+iRow+1)<100)
+		{
+			iCol=0;
+			while(iCol<range50cell[24-iRow] && (y+iCol+1)<100)
+			{
+				if(m_cityGrid[x+iRow+1][y+iCol+1].coverage==0) count++;
+				iCol++;
+			}
+			iRow++;
+		}
+		return(count);
+	}
+
+	/* election algorithms */
+	bool City::ElectBasedOnPercentageNewCellsCovered(int x, int y, float percent)
+	{
+		// go through local circle of cells, count covered, divide, return true if < percent
+		int covered = CountUncoveredCells(x,y);
+		float coverage = (float)covered/(1908.0);
+		// TODO test and remove
+		cout << "DEBUG" << coverage << endl;
+		if(coverage<percent)
+			return(true);
+		else return(false);
+	}
+
+	bool City::ElectBasedOnDistanceToNearestRSU(int x, int y, float percent)
+	{
+		// percent between 0 and 1 -> 0(only elect if right next to an RSU) 1(don't elect if any RSUs in range) 0.5 (elect if no RSUs less than 12.5 cells away)
+		assert(percent<1.0 && percent>0.0);
+
+		// find RSUs, store lowest distance
+		int distance = 26; // larger than range circle
+		int iRow, iCol;
+
+		// upper left quadrant
+		iRow=0; float pyth=0;
+		while(iRow<25 && (x-iRow)>=0)
+		{
+			iCol=0;
+			while(iCol<range50cell[24-iRow] && (y-iCol)>=0)
+			{
+				if(m_cityGrid[x-iRow][y-iCol].vehicle!=0 && m_cityGrid[x-iRow][y-iCol].vehicle->IsRSU() && iRow!=0 && iCol!=0)	// skip ourselves for this check
+				{
+					pyth = sqrt(pow((float)iRow,2)+pow((float)iCol,2)); // pythagoras
+					if(pyth<distance) distance=pyth;
+				}
+				iCol++;
+			}
+			iRow++;
+		}
+
+		// lower left quadrant
+		iRow=0;
+		while(iRow<25 && (x+iRow+1)<100)
+		{
+			iCol=0;
+			while(iCol<range50cell[24-iRow] && (y-iCol)>=0)
+			{
+				if(m_cityGrid[x+iRow+1][y-iCol].vehicle!=0 && m_cityGrid[x+iRow+1][y-iCol].vehicle->IsRSU())
+				{
+					pyth = sqrt(pow((float)(iRow+1),2)+pow((float)iCol,2)); // pythagoras
+					if(pyth<distance) distance=pyth;
+				}
+				iCol++;
+			}
+			iRow++;
+		}
+
+		// upper right quadrant
+		iRow=0;
+		while(iRow<25 && (x-iRow)>=0)
+		{
+			iCol=0;
+			while(iCol<range50cell[24-iRow] && (y+iCol+1)<100)
+			{
+				if(m_cityGrid[x-iRow][y+iCol+1].vehicle!=0 && m_cityGrid[x-iRow][y+iCol+1].vehicle->IsRSU())
+				{
+					pyth = sqrt(pow((float)iRow,2)+pow((float)(iCol+1),2)); // pythagoras
+					if(pyth<distance) distance=pyth;
+				}
+				iCol++;
+			}
+			iRow++;
+		}
+
+		// lower right quadrant
+		iRow=0;
+		while(iRow<25 && (x+iRow+1)<100)
+		{
+			iCol=0;
+			while(iCol<range50cell[24-iRow] && (y+iCol+1)<100)
+			{
+				if(m_cityGrid[x+iRow+1][y+iCol+1].vehicle!=0 && m_cityGrid[x+iRow+1][y+iCol+1].vehicle->IsRSU())
+				{
+					pyth = sqrt(pow((float)(iRow+1),2)+pow((float)(iCol+1),2)); // pythagoras
+					if(pyth<distance) distance=pyth;
+				}
+				iCol++;
+			}
+			iRow++;
+		}
+
+		if(distance<(25*percent))	// if there is an RSU at less than percent% of the 25 cell radius, don't be an RSU
+			return(false); else return(true);
+
+	}
+
+	/* evaluation algorithms */
+
+	int City::CountCoveredCells(void)
+	{
+		int count=0;
+		for(int iRow = 0; iRow<m_gridSize; iRow++)
+			for(int iCol = 0; iCol<m_gridSize; iCol++)
+				if(m_cityGrid[iRow][iCol].coverage>0) count++;
+		return(count);
+	}
+
+	int City::CountOvercoveredCells(void)
+	{
+		int count=0;
+		for(int iRow = 0; iRow<m_gridSize; iRow++)
+			for(int iCol = 0; iCol<m_gridSize; iCol++)
+				if(m_cityGrid[iRow][iCol].coverage>1) count++;
+		return(count);
+	}
+
+	int City::CountOvercoverage(void)
+	{
+		int count=0;
+		for(int iRow = 0; iRow<m_gridSize; iRow++)
+			for(int iCol = 0; iCol<m_gridSize; iCol++)
+				if(m_cityGrid[iRow][iCol].coverage>1) count+=(m_cityGrid[iRow][iCol].coverage-1);
+		return(count);
+	}
+
 	/* Setters and getters */
 
 	double City::GetDeltaT()
