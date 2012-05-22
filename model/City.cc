@@ -182,9 +182,6 @@ namespace ns3
 		if(City->GetDebug()) cout << nowtime.ns3::Time::GetSeconds() << " STEP\n";
 
 		City->TranslateVehicles();
-		// DEBUG
-//		City->PrintCityPointVehicles();
-//		City->PrintCityCoverageMap();
 		City->PrintStatistics();
 	}
 
@@ -777,7 +774,7 @@ namespace ns3
 
 		// lower left quadrant
 		iRow=0;
-		while(iRow<25 && (x+iRow+1)<100)
+		while(iRow<25 && (x+iRow+1)<m_gridSize)
 		{
 			iCol=0;
 			while(iCol<range50cell[24-iRow] && (y-iCol)>=0)
@@ -793,7 +790,7 @@ namespace ns3
 		while(iRow<25 && (x-iRow)>=0)
 		{
 			iCol=0;
-			while(iCol<range50cell[24-iRow] && (y+iCol+1)<100)
+			while(iCol<range50cell[24-iRow] && (y+iCol+1)<m_gridSize)
 			{
 				m_cityGrid[x-iRow][y+iCol+1].coverage++;
 				iCol++;
@@ -803,10 +800,10 @@ namespace ns3
 
 		// lower right quadrant
 		iRow=0;
-		while(iRow<25 && (x+iRow+1)<100)
+		while(iRow<25 && (x+iRow+1)<m_gridSize)
 		{
 			iCol=0;
-			while(iCol<range50cell[24-iRow] && (y+iCol+1)<100)
+			while(iCol<range50cell[24-iRow] && (y+iCol+1)<m_gridSize)
 			{
 				m_cityGrid[x+iRow+1][y+iCol+1].coverage++;
 				iCol++;
@@ -836,7 +833,7 @@ namespace ns3
 
 		// lower left quadrant
 		iRow=0;
-		while(iRow<25 && (x+iRow+1)<100)
+		while(iRow<25 && (x+iRow+1)<m_gridSize)
 		{
 			iCol=0;
 			while(iCol<range50cell[24-iRow] && (y-iCol)>=0)
@@ -852,7 +849,7 @@ namespace ns3
 		while(iRow<25 && (x-iRow)>=0)
 		{
 			iCol=0;
-			while(iCol<range50cell[24-iRow] && (y+iCol+1)<100)
+			while(iCol<range50cell[24-iRow] && (y+iCol+1)<m_gridSize)
 			{
 				m_cityGrid[x-iRow][y+iCol+1].coverage--;
 				iCol++;
@@ -862,10 +859,10 @@ namespace ns3
 
 		// lower right quadrant
 		iRow=0;
-		while(iRow<25 && (x+iRow+1)<100)
+		while(iRow<25 && (x+iRow+1)<m_gridSize)
 		{
 			iCol=0;
-			while(iCol<range50cell[24-iRow] && (y+iCol+1)<100)
+			while(iCol<range50cell[24-iRow] && (y+iCol+1)<m_gridSize)
 			{
 				m_cityGrid[x+iRow+1][y+iCol+1].coverage--;
 				iCol++;
@@ -894,7 +891,7 @@ namespace ns3
 
 		// lower left quadrant
 		iRow=0;
-		while(iRow<25 && (x+iRow+1)<100)
+		while(iRow<25 && (x+iRow+1)<m_gridSize)
 		{
 			iCol=0;
 			while(iCol<range50cell[24-iRow] && (y-iCol)>=0)
@@ -910,7 +907,7 @@ namespace ns3
 		while(iRow<25 && (x-iRow)>=0)
 		{
 			iCol=0;
-			while(iCol<range50cell[24-iRow] && (y+iCol+1)<100)
+			while(iCol<range50cell[24-iRow] && (y+iCol+1)<m_gridSize)
 			{
 				if(m_cityGrid[x-iRow][y+iCol+1].coverage==0) count++;
 				iCol++;
@@ -920,10 +917,10 @@ namespace ns3
 
 		// lower right quadrant
 		iRow=0;
-		while(iRow<25 && (x+iRow+1)<100)
+		while(iRow<25 && (x+iRow+1)<m_gridSize)
 		{
 			iCol=0;
-			while(iCol<range50cell[24-iRow] && (y+iCol+1)<100)
+			while(iCol<range50cell[24-iRow] && (y+iCol+1)<m_gridSize)
 			{
 				if(m_cityGrid[x+iRow+1][y+iCol+1].coverage==0) count++;
 				iCol++;
@@ -974,7 +971,7 @@ namespace ns3
 
 		// lower left quadrant
 		iRow=0;
-		while(iRow<25 && (x+iRow+1)<100)
+		while(iRow<25 && (x+iRow+1)<m_gridSize)
 		{
 			iCol=0;
 			while(iCol<range50cell[24-iRow] && (y-iCol)>=0)
@@ -994,7 +991,7 @@ namespace ns3
 		while(iRow<25 && (x-iRow)>=0)
 		{
 			iCol=0;
-			while(iCol<range50cell[24-iRow] && (y+iCol+1)<100)
+			while(iCol<range50cell[24-iRow] && (y+iCol+1)<m_gridSize)
 			{
 				if(m_cityGrid[x-iRow][y+iCol+1].vehicle!=0 && m_cityGrid[x-iRow][y+iCol+1].vehicle->IsRSU())
 				{
@@ -1008,10 +1005,10 @@ namespace ns3
 
 		// lower right quadrant
 		iRow=0;
-		while(iRow<25 && (x+iRow+1)<100)
+		while(iRow<25 && (x+iRow+1)<m_gridSize)
 		{
 			iCol=0;
-			while(iCol<range50cell[24-iRow] && (y+iCol+1)<100)
+			while(iCol<range50cell[24-iRow] && (y+iCol+1)<m_gridSize)
 			{
 				if(m_cityGrid[x+iRow+1][y+iCol+1].vehicle!=0 && m_cityGrid[x+iRow+1][y+iCol+1].vehicle->IsRSU())
 				{
@@ -1058,6 +1055,10 @@ namespace ns3
 
 	void City::PrintStatistics(void)
 	{
+		// ran every Step
+
+		PrintCityCoverageMap();
+
 		ns3::Time nowtime = ns3::Simulator::Now();
 		if(nowtime.ns3::Time::GetSeconds() > m_nvehicles*m_interval)	// ensure city is filled before taking statistics
 		{
@@ -1074,6 +1075,7 @@ namespace ns3
 				<< '\n';
 
 		}
+
 	}
 
 	/* Setters and getters */
