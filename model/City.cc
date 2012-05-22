@@ -1129,6 +1129,9 @@ namespace ns3
 
 //		PrintCityPointVehicles();
 //		PrintCityCoverageMap();
+
+		int seconds = (int)nowtime.ns3::Time::GetSeconds();
+		if( seconds%10 == 0 )	// only once every 10 s
 		if(nowtime.ns3::Time::GetSeconds() > m_nvehicles*m_interval)	// ensure city is filled before taking statistics
 		{
 			cout << nowtime.ns3::Time::GetSeconds() << " STAT "
