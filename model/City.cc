@@ -41,10 +41,10 @@ namespace ns3
 	{
 		/* set defaults */
 		m_dt=1;
-		m_gridSize=2000/5;
+		m_gridSize=100;
 		m_probPark = 0.001;
-		m_probTurnLeft = 0.20;
-		m_probTurnRight = 0.20;
+		m_probTurnLeft = 0.25;
+		m_probTurnRight = 0.25;
 		m_debug=false;
 	}
 
@@ -957,7 +957,7 @@ namespace ns3
 				if(m_cityGrid[x-iRow][y-iCol].vehicle!=0 && m_cityGrid[x-iRow][y-iCol].vehicle->IsRSU() && iRow!=0 && iCol!=0)	// skip ourselves for this check
 				{
 					pyth = sqrt(pow((float)iRow,2)+pow((float)iCol,2)); // pythagoras
-					if(pyth<distance) distance=pyth;
+					if(pyth<distance) distance=(int)pyth;
 				}
 				iCol++;
 			}
@@ -974,7 +974,7 @@ namespace ns3
 				if(m_cityGrid[x+iRow+1][y-iCol].vehicle!=0 && m_cityGrid[x+iRow+1][y-iCol].vehicle->IsRSU())
 				{
 					pyth = sqrt(pow((float)(iRow+1),2)+pow((float)iCol,2)); // pythagoras
-					if(pyth<distance) distance=pyth;
+					if(pyth<distance) distance=(int)pyth;
 				}
 				iCol++;
 			}
@@ -991,7 +991,7 @@ namespace ns3
 				if(m_cityGrid[x-iRow][y+iCol+1].vehicle!=0 && m_cityGrid[x-iRow][y+iCol+1].vehicle->IsRSU())
 				{
 					pyth = sqrt(pow((float)iRow,2)+pow((float)(iCol+1),2)); // pythagoras
-					if(pyth<distance) distance=pyth;
+					if(pyth<distance) distance=(int)pyth;
 				}
 				iCol++;
 			}
@@ -1008,7 +1008,7 @@ namespace ns3
 				if(m_cityGrid[x+iRow+1][y+iCol+1].vehicle!=0 && m_cityGrid[x+iRow+1][y+iCol+1].vehicle->IsRSU())
 				{
 					pyth = sqrt(pow((float)(iRow+1),2)+pow((float)(iCol+1),2)); // pythagoras
-					if(pyth<distance) distance=pyth;
+					if(pyth<distance) distance=(int)pyth;
 				}
 				iCol++;
 			}
@@ -1124,10 +1124,10 @@ namespace ns3
 		if(nowtime.ns3::Time::GetSeconds()<0.1)
 		{
 			// print city map
-			PrintCityStruct();
+//			PrintCityStruct();
 		}
 
-
+//		PrintCityPointVehicles();
 //		PrintCityCoverageMap();
 		if(nowtime.ns3::Time::GetSeconds() > m_nvehicles*m_interval)	// ensure city is filled before taking statistics
 		{
@@ -1170,6 +1170,9 @@ namespace ns3
 
 	void City::SetInterval(float value)
 		{ m_interval=value; }
+
+	void City::SetTurningProb(float value)
+		{ m_probTurnLeft=value; m_probTurnRight=value; }
 
 	UniformVariable City::GetRandomNum(void)
 		{ return(randomNum); }

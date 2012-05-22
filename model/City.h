@@ -107,6 +107,7 @@ namespace ns3
 			bool GetDebug(void);
 			void SetNumberOfVehicles(int value);
 			void SetInterval(float value);
+			void SetTurningProb(float value);
 
 			Ptr<Vehicle> CreateVehicle (void);
 			void AddVehicle(Ptr<Vehicle> veh, CellOrientation ort);

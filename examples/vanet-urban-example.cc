@@ -66,10 +66,12 @@ int main (int argc, char *argv[])
 	int runNumber=1;					// run number
 	double deltaT=1;					// simulation step, max resolution is 1 step per deltaT
 	int gridSize=400;					// grid size^2, default 400x400 (5m cells, 2x2km)
-	double parkProb=0.001;
+	double parkProb=0.02;
 	bool debug=false;
-	int nVehicles=20;					// number of vehicles to introduce
+	int nVehicles=320;					// number of vehicles to introduce
 	float interval=1.0;					// delay in seconds between each new vehicle
+	float turningprob=0.10;				// turning (left and right) probability
+
 
 	// Process command-line args
 	CommandLine cmd;
@@ -80,6 +82,7 @@ int main (int argc, char *argv[])
 	cmd.AddValue ("debug", "enable debug output", debug);
 	cmd.AddValue ("nvehicles", "vehicles to insert", nVehicles);
 	cmd.AddValue ("interval", "delay between each new vehicle", interval);
+	cmd.AddValue ("turning", "turning probability at each intersection", turningprob);
 	cmd.Parse(argc, argv);
 
 	// Setup a City
@@ -89,7 +92,7 @@ int main (int argc, char *argv[])
 	g_City->SetDebug(debug);
 	g_City->SetNumberOfVehicles(nVehicles);
 	g_City->SetInterval(interval);
-
+	g_City->SetTurningProb(turningprob);
 
 	// Bind the City/Vehicle events to the event handlers
 	g_City->SetInitVehiclesCallback(MakeCallback(&InitVehicles));
