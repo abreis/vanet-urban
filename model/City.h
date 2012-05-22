@@ -72,8 +72,8 @@ namespace ns3
 
 			std::vector< std::vector< Cell > > m_cityGrid;
 			std::list< Ptr<Vehicle> > m_Vehicles;		// holds vehicles in the network
-			std::list< Ptr<Vehicle> > m_parkedVehicles;	// holds vehicles that parked
-			std::list< Ptr<Vehicle> > m_RSUs;			// holds vehicles that became RSUs
+//			std::list< Ptr<Vehicle> > m_parkedVehicles;	// holds vehicles that parked
+//			std::list< Ptr<Vehicle> > m_RSUs;			// holds vehicles that became RSUs
 
 			void InitCity();
 			void TranslateVehicles();
@@ -84,6 +84,7 @@ namespace ns3
 			// election algorithms
 			bool ElectBasedOnPercentageNewCellsCovered(int x, int y, float percent);
 			bool ElectBasedOnDistanceToNearestRSU(int x, int y, float percent);
+			bool ElectBasedOnNumberOfNeighborRSUs(int x, int y, int maxneighbors);
 
 			Callback<bool, Ptr<City> ,Ptr<Vehicle> , double> m_controlVehicle;
 			Callback<bool, Ptr<City> > m_initVehicles;
@@ -118,7 +119,7 @@ namespace ns3
 			// evaluation algorithms
 			int CountCoveredCells(void);	// number of cells under an RSU
 			int CountOvercoveredCells(void);	// number of cells under more than one RSU
-			int CountOvercoverage(void);	// Overcoverage amount (how much overcoverage in all cells)
+			int CountCoverageSaturation(void);	// Overcoverage amount (how much overcoverage in all cells)
 
 			VehicleReceiveCallback GetReceiveDataCallback();
 			void SetReceiveDataCallback(VehicleReceiveCallback receiveData);

@@ -45,16 +45,6 @@ static void Stop(Ptr<City> City) { City->Stop(); }
 
 static bool InitVehicles(Ptr<City> City)
 {
-	// print city map
-	g_City->PrintCityStruct();
-
-//	// initialize vehicles in this routine
-//	Ptr<Vehicle> testDummy01 = g_City->CreateVehicle();
-////	VanetHeader vHeader;
-////	vHeader.SetID(1337);
-////	testDummy01->AddPacket(vHeader);
-//	Simulator::Schedule(Seconds(0.5), &ns3::City::AddVehicle, g_City, testDummy01, RIGHTTOP);
-
 	return(true);
 }
 
