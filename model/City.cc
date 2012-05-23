@@ -199,15 +199,17 @@ namespace ns3
 
 	void City::RandomAddVehicles(Ptr<City> City, int number, double interval)
 	{
-		// add vehicles entering in the city randomly
-		// get a random entry point (enum can be equaled to int)
-		int randomPoint = (int)( round(City->GetRandomNum().GetValue()*7.0) );
-		CellOrientation entryPoint = (CellOrientation)randomPoint;
-		Ptr<Vehicle> newVeh = City->CreateVehicle();
-		City->AddVehicle(newVeh, entryPoint);
-
 		if(number>0)
+		{
+			// add vehicles entering in the city randomly
+			// get a random entry point (enum can be equaled to int)
+			int randomPoint = (int)( round(City->GetRandomNum().GetValue()*7.0) );
+			CellOrientation entryPoint = (CellOrientation)randomPoint;
+			Ptr<Vehicle> newVeh = City->CreateVehicle();
+			City->AddVehicle(newVeh, entryPoint);
+
 			Simulator::Schedule(Seconds(interval), &City::RandomAddVehicles, City, (--number), interval);
+		}
 	}
 
 	void City::AddVehicle(Ptr<Vehicle> veh, CellOrientation ort)
