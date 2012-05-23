@@ -364,7 +364,8 @@ namespace ns3
 						} else
 						{
 							// vehicle is free to move, check for frontmost vehicles and evaluate parking probability
-							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow-1][iCol].type==PARKING) && iCol<(m_gridSize-3))	// probability:space:not at edges
+							// probabilityOfParking:isParkingSpace:dontParkAtEdges:isParkingSpotFree
+							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow-1][iCol].type==PARKING) && iCol<(m_gridSize-3) && m_cityGrid[iRow-1][iCol].vehicle==0)
 							{
 								// park the vehicle
 								m_cityGrid[iRow][iCol].vehicle->SetParked(true);
@@ -463,7 +464,8 @@ namespace ns3
 						} else
 						{
 							// vehicle is free to move, check for frontmost vehicles and evaluate parking probability
-							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow+1][iCol].type==PARKING) && iCol>2)	// probability:space:not at edges
+							// probabilityOfParking:isParkingSpace:dontParkAtEdges:isParkingSpotFree
+							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow+1][iCol].type==PARKING) && iCol>2 && m_cityGrid[iRow+1][iCol].vehicle==0)
 							{
 								// park the vehicle
 								m_cityGrid[iRow][iCol].vehicle->SetParked(true);
@@ -573,7 +575,8 @@ namespace ns3
 						} else
 						{
 							// vehicle is free to move, check for frontmost vehicles and evaluate parking probability
-							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow][iCol-1].type==PARKING) && iRow>2)	// probability:space:not at edges
+							// probabilityOfParking:isParkingSpace:dontParkAtEdges:isParkingSpotFree
+							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow][iCol-1].type==PARKING) && iRow>2 && m_cityGrid[iRow][iCol-1].vehicle==0)
 							{
 								// park the vehicle
 								m_cityGrid[iRow][iCol].vehicle->SetParked(true);
@@ -672,7 +675,8 @@ namespace ns3
 						} else
 						{
 							// vehicle is free to move, check for frontmost vehicles and evaluate parking probability
-							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow][iCol+1].type==PARKING) && iRow<(m_gridSize-3))	// probability:space:not at edges
+							// probabilityOfParking:isParkingSpace:dontParkAtEdges:isParkingSpotFree
+							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow][iCol+1].type==PARKING) && iRow<(m_gridSize-3) && m_cityGrid[iRow][iCol+1].vehicle==0)
 							{
 								// park the vehicle
 								m_cityGrid[iRow][iCol].vehicle->SetParked(true);
