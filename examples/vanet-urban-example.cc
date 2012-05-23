@@ -71,7 +71,11 @@ int main (int argc, char *argv[])
 	int nVehicles=320;					// number of vehicles to introduce
 	float interval=1.0;					// delay in seconds between each new vehicle
 	float turningprob=0.10;				// turning (left and right) probability
-
+	short algorithm=0;
+	float percent=0;					// algorithm decision criteria
+	bool coveragemap=false;
+	bool citymap=false;
+	bool stat=true;
 
 	// Process command-line args
 	CommandLine cmd;
@@ -83,6 +87,11 @@ int main (int argc, char *argv[])
 	cmd.AddValue ("nvehicles", "vehicles to insert", nVehicles);
 	cmd.AddValue ("interval", "delay between each new vehicle", interval);
 	cmd.AddValue ("turning", "turning probability at each intersection", turningprob);
+	cmd.AddValue ("algorithm", "RSU election algorithm", algorithm);
+	cmd.AddValue ("criteria", "RSU algorithm criteria", percent);
+	cmd.AddValue ("printCoverage", "print coverage map every step", coveragemap);
+	cmd.AddValue ("printCity", "print city map every step", citymap);
+	cmd.AddValue ("stat", "print statistics", stat);
 	cmd.Parse(argc, argv);
 
 	// Setup a City
@@ -93,6 +102,10 @@ int main (int argc, char *argv[])
 	g_City->SetNumberOfVehicles(nVehicles);
 	g_City->SetInterval(interval);
 	g_City->SetTurningProb(turningprob);
+	g_City->SetAlgorithm(algorithm);
+	g_City->SetAlgorithmPercentage(percent);
+	g_City->SetMapPrinting(coveragemap, citymap);
+	g_City->SetStatPrinting(stat);
 
 	// Bind the City/Vehicle events to the event handlers
 	g_City->SetInitVehiclesCallback(MakeCallback(&InitVehicles));

@@ -64,6 +64,11 @@ namespace ns3
 			bool m_debug;						// debug message flag
 			int m_nvehicles;
 			float m_interval;
+			short m_algorithm;					// election algorithm to use
+			float m_percent;					// percentage for algorithms
+			bool m_printCoverage;
+			bool m_printCity;
+			bool m_stat;
 
 			UniformVariable randomNum;			// generates uniform numbers between 0.0 and 1.0
 			double m_probPark;					// probability of parking
@@ -82,9 +87,10 @@ namespace ns3
 			int CountUncoveredCells(int x, int y);
 
 			// election algorithms
+			void ElectRSU(int x, int y);
 			bool ElectBasedOnPercentageNewCellsCovered(int x, int y, float percent);
 			bool ElectBasedOnDistanceToNearestRSU(int x, int y, float percent);
-			bool ElectBasedOnNumberOfNeighborRSUs(int x, int y, int maxneighbors);
+			bool ElectBasedOnNumberOfNeighborRSUs(int x, int y, float maxneighbors);
 
 			Callback<bool, Ptr<City> ,Ptr<Vehicle> , double> m_controlVehicle;
 			Callback<bool, Ptr<City> > m_initVehicles;
@@ -108,6 +114,10 @@ namespace ns3
 			void SetNumberOfVehicles(int value);
 			void SetInterval(float value);
 			void SetTurningProb(float value);
+			void SetAlgorithm(short value);
+			void SetAlgorithmPercentage(float value);
+			void SetMapPrinting(bool coverage, bool city);
+			void SetStatPrinting(bool stat);
 
 			Ptr<Vehicle> CreateVehicle (void);
 			void AddVehicle(Ptr<Vehicle> veh, CellOrientation ort);

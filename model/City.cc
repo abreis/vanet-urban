@@ -46,6 +46,11 @@ namespace ns3
 		m_probTurnLeft = 0.25;
 		m_probTurnRight = 0.25;
 		m_debug=false;
+		m_algorithm=0;
+		m_percent=0.5;
+		m_printCoverage=false;
+		m_printCity=false;
+		m_stat=true;
 	}
 
 	City::~City()
@@ -362,13 +367,14 @@ namespace ns3
 							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow-1][iCol].type==PARKING) && iCol<(m_gridSize-3))	// probability:space:not at edges
 							{
 								// park the vehicle
-
 								m_cityGrid[iRow][iCol].vehicle->SetParked(true);
 								m_cityGrid[iRow-1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle = 0;
-								TagCoverageRSU(iRow-1,iCol);
-
 								if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow-1) << "][" << (iCol) << "]\n";
+
+								// evaluate becoming an RSU
+								ElectRSU(iRow-1, iCol);
+
 							} else if (m_cityGrid[iRow][iCol].vehicle->GetVelocity()==1)
 							{
 								// move forward 1, evaluate speeding up to 2cells/step
@@ -460,13 +466,14 @@ namespace ns3
 							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow+1][iCol].type==PARKING) && iCol>2)	// probability:space:not at edges
 							{
 								// park the vehicle
-
 								m_cityGrid[iRow][iCol].vehicle->SetParked(true);
 								m_cityGrid[iRow+1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle = 0;
-								TagCoverageRSU(iRow+1,iCol);
-
 								if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow+1) << "][" << (iCol) << "]\n";
+
+								// evaluate becoming an RSU
+								ElectRSU(iRow+1, iCol);
+
 							} else if (m_cityGrid[iRow][iCol].vehicle->GetVelocity()==1)
 							{
 								// move forward 1, evaluate speeding up to 2cells/step
@@ -569,13 +576,14 @@ namespace ns3
 							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow][iCol-1].type==PARKING) && iRow>2)	// probability:space:not at edges
 							{
 								// park the vehicle
-
 								m_cityGrid[iRow][iCol].vehicle->SetParked(true);
 								m_cityGrid[iRow][iCol-1].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle = 0;
-								TagCoverageRSU(iRow,iCol-1);
-
 								if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow) << "][" << (iCol-1) << "]\n";
+
+								// evaluate becoming an RSU
+								ElectRSU(iRow, iCol-1);
+
 							} else if (m_cityGrid[iRow][iCol].vehicle->GetVelocity()==1)
 							{
 								// move forward 1, evaluate speeding up to 2cells/step
@@ -667,13 +675,14 @@ namespace ns3
 							if( (randomNum.GetValue()<m_probPark) && (m_cityGrid[iRow][iCol+1].type==PARKING) && iRow<(m_gridSize-3))	// probability:space:not at edges
 							{
 								// park the vehicle
-
 								m_cityGrid[iRow][iCol].vehicle->SetParked(true);
 								m_cityGrid[iRow][iCol+1].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle = 0;
-								TagCoverageRSU(iRow,iCol+1);
-
 								if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " PARK  [" << (iRow) << "][" << (iCol+1) << "]\n";
+
+								// evaluate becoming an RSU
+								ElectRSU(iRow, iCol+1);
+
 							} else if (m_cityGrid[iRow][iCol].vehicle->GetVelocity()==1)
 							{
 								// move forward 1, evaluate speeding up to 2cells/step
@@ -712,34 +721,50 @@ namespace ns3
 							// unpark the vehicle
 							if(m_cityGrid[iRow+1][iCol].type==ROAD && m_cityGrid[iRow+1][iCol].vehicle==0)	// unpark to the south
 							{
+								if(m_cityGrid[iRow][iCol].vehicle->IsRSU())
+								{
+									UnTagCoverageRSU(iRow, iCol);
+									m_cityGrid[iRow][iCol].vehicle->SetRSU(false);
+								}
 								m_cityGrid[iRow][iCol].vehicle->SetParked(false);
 								m_cityGrid[iRow+1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle=0;
-								UnTagCoverageRSU(iRow, iCol);
 								if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " LEAVE [" << (iRow+1) << "][" << (iCol) << "]\n";
 							}
 							else if(m_cityGrid[iRow-1][iCol].type==ROAD && m_cityGrid[iRow-1][iCol].vehicle==0) // unpark to the north
 							{
+								if(m_cityGrid[iRow][iCol].vehicle->IsRSU())
+								{
+									UnTagCoverageRSU(iRow, iCol);
+									m_cityGrid[iRow][iCol].vehicle->SetRSU(false);
+								}
 								m_cityGrid[iRow][iCol].vehicle->SetParked(false);
 								m_cityGrid[iRow-1][iCol].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle=0;
-								UnTagCoverageRSU(iRow, iCol);
 								if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " LEAVE [" << (iRow-1) << "][" << (iCol) << "]\n";
 							}
 							else if(m_cityGrid[iRow][iCol+1].type==ROAD && m_cityGrid[iRow][iCol+1].vehicle==0) // unpark to the west
 							{
+								if(m_cityGrid[iRow][iCol].vehicle->IsRSU())
+								{
+									UnTagCoverageRSU(iRow, iCol);
+									m_cityGrid[iRow][iCol].vehicle->SetRSU(false);
+								}
 								m_cityGrid[iRow][iCol].vehicle->SetParked(false);
 								m_cityGrid[iRow][iCol+1].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle=0;
-								UnTagCoverageRSU(iRow, iCol);
 								if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " LEAVE [" << (iRow) << "][" << (iCol+1) << "]\n";
 							}
 							else if(m_cityGrid[iRow][iCol-1].type==ROAD && m_cityGrid[iRow][iCol-1].vehicle==0) // unpark to the east
 							{
+								if(m_cityGrid[iRow][iCol].vehicle->IsRSU())
+								{
+									UnTagCoverageRSU(iRow, iCol);
+									m_cityGrid[iRow][iCol].vehicle->SetRSU(false);
+								}
 								m_cityGrid[iRow][iCol].vehicle->SetParked(false);
 								m_cityGrid[iRow][iCol-1].vehicle = m_cityGrid[iRow][iCol].vehicle;
 								m_cityGrid[iRow][iCol].vehicle=0;
-								UnTagCoverageRSU(iRow, iCol);
 								if(m_debug) cout << nowtime.ns3::Time::GetSeconds() << " LEAVE [" << (iRow) << "][" << (iCol-1) << "]\n";
 							}
 						}
@@ -925,15 +950,39 @@ namespace ns3
 		return(count);
 	}
 
-	/* election algorithms */
+	/* * * * * * * * * * * *
+	 * election algorithms *
+	 * * * * * * * * * * * */
+
+	void City::ElectRSU(int x, int y)
+	{
+		bool become=false;
+		switch(m_algorithm)
+		{
+			case 0:
+				become=true; break;
+			case 1:
+				become=ElectBasedOnPercentageNewCellsCovered(x, y, m_percent); break;
+			case 2:
+				become=ElectBasedOnDistanceToNearestRSU(x, y, m_percent); break;
+			case 3:
+				become=ElectBasedOnNumberOfNeighborRSUs(x, y, m_percent); break;
+			default:
+				break;
+		}
+		if(become) {
+			TagCoverageRSU(x, y);
+			m_cityGrid[x][y].vehicle->SetRSU(true);
+		}
+	}
+
 	bool City::ElectBasedOnPercentageNewCellsCovered(int x, int y, float percent)
 	{
 		// go through local circle of cells, count covered, divide, return true if < percent
-		int covered = CountUncoveredCells(x,y);
-		float coverage = (float)covered/(float)TOTALCELLS;
-		// TODO test and remove
-		cout << "DEBUG coverage percent algorithm" << coverage << endl;
-		if(coverage<percent)
+		int newlyCovered = CountUncoveredCells(x,y);
+		float newCoverage = (float)newlyCovered/(float)TOTALCELLS;
+
+		if(newCoverage>percent)
 			return(true);
 		else return(false);
 	}
@@ -1019,8 +1068,12 @@ namespace ns3
 			return(false); else return(true);
 	}
 
-	bool City::ElectBasedOnNumberOfNeighborRSUs(int x, int y, int maxneighbors)
+	bool City::ElectBasedOnNumberOfNeighborRSUs(int x, int y, float maxneighbors)
 	{
+		/* NOTE:
+		 * maxneighbors here isn't a percentage, but an integer
+		 * Datatype float chosen for consistency
+		 */
 		int count=0;
 
 		int iRow, iCol;
@@ -1080,13 +1133,15 @@ namespace ns3
 			iRow++;
 		}
 
-		if(count>maxneighbors)
+		if(count>(int)maxneighbors)
 			return(false);
 		else return(true);
 	}
 
 
-	/* evaluation algorithms */
+	/* * * * * * * * * * * * *
+	 * evaluation algorithms *
+	 * * * * * * * * * * * * */
 
 	int City::CountCoveredCells(void)
 	{
@@ -1121,34 +1176,36 @@ namespace ns3
 		ns3::Time nowtime = ns3::Simulator::Now();
 
 		// only on the first step
-		if(nowtime.ns3::Time::GetSeconds()<0.1)
+		if(nowtime.ns3::Time::GetSeconds()<0.1 && (m_printCoverage || m_printCity))
+			PrintCityStruct();
+
+		if(m_printCity) PrintCityPointVehicles();
+		if(m_printCoverage) PrintCityCoverageMap();
+
+		if(m_stat)
 		{
-			// print city map
-//			PrintCityStruct();
-		}
+			int seconds = (int)nowtime.ns3::Time::GetSeconds();
+			if( seconds%10 == 0 )	// only once every 10 s
+			if(nowtime.ns3::Time::GetSeconds() > m_nvehicles*m_interval)	// ensure city is filled before taking statistics
+			{
+				cout << nowtime.ns3::Time::GetSeconds() << " STAT "
+					<< "COVERED " << CountCoveredCells()
+					<< '\n';
 
-//		PrintCityPointVehicles();
-//		PrintCityCoverageMap();
+				cout << nowtime.ns3::Time::GetSeconds() << " STAT "
+					<< "OVERCOVERED " << CountOvercoveredCells()
+					<< '\n';
 
-		int seconds = (int)nowtime.ns3::Time::GetSeconds();
-		if( seconds%10 == 0 )	// only once every 10 s
-		if(nowtime.ns3::Time::GetSeconds() > m_nvehicles*m_interval)	// ensure city is filled before taking statistics
-		{
-			cout << nowtime.ns3::Time::GetSeconds() << " STAT "
-				<< "COVERED " << CountCoveredCells()
-				<< '\n';
-
-			cout << nowtime.ns3::Time::GetSeconds() << " STAT "
-				<< "OVERCOVERED " << CountOvercoveredCells()
-				<< '\n';
-
-			cout << nowtime.ns3::Time::GetSeconds() << " STAT "
-				<< "OVERCOVERAGE " << setw(3) << (float)CountCoverageSaturation()/(float)TOTALCELLS
-				<< '\n';
+				cout << nowtime.ns3::Time::GetSeconds() << " STAT "
+					<< "OVERCOVERAGE " << setw(3) << (float)CountCoverageSaturation()/(float)TOTALCELLS
+					<< '\n';
+			}
 		}
 	}
 
-	/* Setters and getters */
+	/* * * * * * * * * * * *
+	 * setters and getters *
+	 * * * * * * * * * * * */
 
 	double City::GetDeltaT()
 		{ return(m_dt); }
@@ -1177,10 +1234,25 @@ namespace ns3
 	void City::SetTurningProb(float value)
 		{ m_probTurnLeft=value; m_probTurnRight=value; }
 
+	void City::SetAlgorithm(short value)
+		{ m_algorithm=value; }
+
+	void City::SetAlgorithmPercentage(float value)
+		{ m_percent=value; }
+
+	void City::SetMapPrinting(bool coverage, bool city)
+		{ m_printCoverage=coverage; m_printCity=city; }
+
+	void City::SetStatPrinting(bool stat)
+		{ m_stat=stat; }
+
+
 	UniformVariable City::GetRandomNum(void)
 		{ return(randomNum); }
 
-	/* Callbacks */
+	/* * * * * * *
+	 * callbacks *
+	 * * * * * * */
 
 	Callback<void, Ptr<Vehicle>, VanetHeader> City::GetReceiveDataCallback()
 		{ return(m_receiveData); }
